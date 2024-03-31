@@ -2,6 +2,6 @@
 @NoPromptForPassword 1
 @sSteamCmdForcePlatformType windows
 login anonymous
-force_install_dir /home/steam/reflex
+force_install_dir /srv/steam/reflexded
 app_update 329740 validate
 quit
