@@ -1,0 +1,7 @@
+@ShutdownOnFailedCommand 1
+@NoPromptForPassword 1
+@sSteamCmdForcePlatformType windows
+login anonymous
+force_install_dir /home/steam/reflex
+app_update 329740 validate
+quit

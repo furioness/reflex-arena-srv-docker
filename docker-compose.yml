@@ -1,0 +1,55 @@
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - './docker/nginx.conf:/etc/nginx/nginx.conf'
+      - './replays/:/usr/share/nginx/html:ro'
+    restart: always
+    cpus: 0.1
+
+  replays_cleaner:
+    build: 
+      context: ./docker/
+      dockerfile: cleaner.Dockerfile
+    command: bash -c "chmod +x /cleanup_replays.sh && /cleanup_replays.sh"
+    environment:
+      REPLAY_DIR: "/replays"
+    volumes:
+      - './replays/:/replays/'
+      - './docker/cleanup_replays.sh:/cleanup_replays.sh'
+    restart: always
+    cpus: 0.1
+
+  ded1:
+    build: 
+      context: ./docker/
+      dockerfile: Dockerfile
+    tty: true
+    ports:
+      - "25787:25787/tcp"
+      - "25787:25787/udp"
+    volumes:
+     - './replays/:/home/steam/reflex/replays/'
+     - './dedicatedserver.cfg:/home/steam/reflex/dedicatedserver.cfg:ro'
+     - './rulesets/:/home/steam/reflex/rulesets/:ro'
+    restart: always
+    environment:
+      SRV_ARGS: "+sv_hostname #1 Bober Kurwa Sesen-rated http://70.34.252.62/ - demos +sv_gameport 25787"
+
+  ded2:
+    build: 
+      context: ./docker/
+      dockerfile: Dockerfile
+    tty: true
+    ports:
+      - "25788:25788/tcp"
+      - "25788:25788/udp"
+    volumes:
+     - './replays/:/home/steam/reflex/replays/'
+     - './dedicatedserver.cfg:/home/steam/reflex/dedicatedserver.cfg'
+     - './rulesets/:/home/steam/reflex/rulesets/:ro'
+    restart: always
+    environment:
+      SRV_ARGS: "+sv_hostname #2 Bober Kurwa Sesen-rated http://70.34.252.62/ - demos +sv_gameport 25788"
