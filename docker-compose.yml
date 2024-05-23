@@ -57,7 +57,7 @@ services:
     restart: always
     entrypoint: /runserver.sh
     environment:
-      SRV_ARGS: "+sv_hostname #1 Bober Kurwa Sesen-rated http://70.34.252.62/ - demos +sv_gameport 25787"
+      SRV_ARGS: "+sv_hostname #1 Bobr Rated http://bobr.furioness.net/ - demos +sv_gameport 25787"
 
   ded2:
     build: 
@@ -73,4 +73,4 @@ services:
     entrypoint: /runserver.sh
     restart: always
     environment:
-      SRV_ARGS: "+sv_hostname #2 Bober Kurwa Sesen-rated http://70.34.252.62/ - demos +sv_gameport 25788"
+      SRV_ARGS: "+sv_hostname #2 Bobr Rated http://bobr.furioness.net/ - demos +sv_gameport 25788"
