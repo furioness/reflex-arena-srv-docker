@@ -7,6 +7,11 @@ services:
       - './docker/nginx.conf:/etc/nginx/nginx.conf:ro'
       - './reflexded/replays/:/usr/share/nginx/html:ro'
     restart: always
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
+        max-file: "3"
     cpus: 0.1
 
   init_reflexded:
@@ -28,6 +33,11 @@ services:
       - './reflexded/:/srv/steam/reflexded'
       - './docker/rulesets_updater.sh:/rulesets_updater.sh'
     restart: always
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
+        max-file: "3"
     cpus: 0.1
 
   replays_cleaner:
@@ -41,6 +51,11 @@ services:
       - './reflexded/replays/:/replays/'
       - './docker/cleanup_replays.sh:/cleanup_replays.sh'
     restart: always
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
+        max-file: "3"
     cpus: 0.1
 
   ded1:
@@ -55,6 +70,11 @@ services:
      - './reflexded/:/srv/steam/reflexded'
      - './docker/runserver.sh:/runserver.sh:ro'
     restart: always
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
+        max-file: "3"
     entrypoint: /runserver.sh
     environment:
       SRV_ARGS: "+sv_hostname #1 Bobr Rated http://bobr.furioness.net/ - demos +sv_gameport 25787"
@@ -72,5 +92,10 @@ services:
      - './docker/runserver.sh:/runserver.sh:ro'
     entrypoint: /runserver.sh
     restart: always
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       SRV_ARGS: "+sv_hostname #2 Bobr Rated http://bobr.furioness.net/ - demos +sv_gameport 25788"
