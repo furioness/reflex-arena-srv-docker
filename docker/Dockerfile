@@ -8,7 +8,10 @@ RUN dpkg --add-architecture i386 \
  && mkdir -pm755 /etc/apt/keyrings  \
  && wget -O - https://dl.winehq.org/wine-builds/winehq.key | gpg --dearmor -o /etc/apt/keyrings/winehq-archive.key - \
  && wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/debian/dists/bookworm/winehq-bookworm.sources \
- && apt install -y winehq-stable \
+ && apt-get update -o Dir::Etc::sourcelist="sources.list.d/winehq-bookworm.sources" \
+                   -o Dir::Etc::sourceparts="-" \
+                   -o APT::Get::List-Cleanup="0" \
+ && apt-get install --no-install-recommends -y winehq-stable \
  && rm -rf /var/lib/apt/lists/*
 
 # RUN useradd steam -m -r -s /bin/bash
