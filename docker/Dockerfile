@@ -14,5 +14,10 @@ RUN dpkg --add-architecture i386 \
  && apt-get install --no-install-recommends -y winehq-stable \
  && rm -rf /var/lib/apt/lists/*
 
+# Pre-create a 32-bit prefix
+RUN WINEARCH=win32 wineboot --init \
+ && wineserver -w
+
+
 # RUN useradd steam -m -r -s /bin/bash
 # USER steam
