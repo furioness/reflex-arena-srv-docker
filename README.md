@@ -41,7 +41,7 @@ If you are using cheap hosting with a small amount of storage, logs and package 
 
 ### Rulesets
 If you want to have your ruleset, you have to make a pull request to this repo https://github.com/Nailok/reflex_rulesets.git
-You can tag D-X in the Reflex Arena RU Discord server to speed up things.
+You can tag D-X in the Reflex Arena RU Discord server https://discord.com/invite/vQ3rx5m to speed up things.
 
 ### Server doesn't load some maps from the workshop
 Check the logs (`docker compose logs -f ded1` and try the thing on that server), if you see something like `Crypto API failed certificate check, error flags 0x00000008 for '/CN=cache7-waw1.steamcontent.com'`, then the system's certificate storage must be outdated.
