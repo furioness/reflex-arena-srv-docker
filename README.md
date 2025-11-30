@@ -13,7 +13,9 @@ A simpler way to host dedicated Reflex Arena servers with the following features
 - get a Linux machine with Docker and Docker Compose installed
 - clone the repo and `cd` into it
 - edit configs (details are below): `docker-compose.yml` and `docker/dedicatedserver.cfg`
-- make sure the ports are open (25787, 25788, etc, for each server; UDP, and maybe TCP too)
+- make sure the ports are open 
+  - 25787, 25788, etc, for each server; UDP, and maybe TCP too
+  - 80 for the replays web page
 - run docker compose up
 - profit!!!
 
@@ -61,3 +63,4 @@ Using a fresh wine version must fix the thing. Simply run `docker compose up --b
 - health checks
 - using image repos instead of building everything locally (but you must trust the repo)
 - replace cracked reflexded.exe with cracking script, so there won't be any obscure executable
+- a better folder structure - why storing `dedicatedserver.cfg` in the `docker` folder?
