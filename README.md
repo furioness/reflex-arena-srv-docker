@@ -16,7 +16,7 @@ A simpler way to host dedicated Reflex Arena servers with the following features
 - make sure the ports are open 
   - 25787, 25788, etc, for each server; UDP, and maybe TCP too
   - 80 for the replays web page
-- run docker compose up
+- run docker `compose up -d`
 - profit!!!
 
 ## Quirks/specifics
@@ -43,6 +43,9 @@ If you are using cheap hosting with a small amount of storage, logs and package 
 If you want to have your ruleset, you have to make a pull request to this repo https://github.com/Nailok/reflex_rulesets.git
 You can tag D-X in the Reflex Arena RU Discord server https://discord.com/invite/vQ3rx5m to speed up things.
 
+### Dedicatedserver.cfg
+For some reason, `docker/dedicatedserver.cfg` is used only on the first `docker compose up` run, thus making ambiguous what file to edit. For now, edit both - from docker and inside reflexded folder. Why? The first one, so in case you ever reinit the build (by removing the sentiel file `reflexded/CONTAINER_ALREADY_STARTED`), the second one - it is the one actually used by the instances.
+
 ### Server doesn't load some maps from the workshop
 Check the logs (`docker compose logs -f ded1` and try the thing on that server), if you see something like `Crypto API failed certificate check, error flags 0x00000008 for '/CN=cache7-waw1.steamcontent.com'`, then the system's certificate storage must be outdated.
 Using a fresh wine version must fix the thing. Simply run `docker compose up --build -d` to rebuild the image.
@@ -64,3 +67,4 @@ Using a fresh wine version must fix the thing. Simply run `docker compose up --b
 - using image repos instead of building everything locally (but you must trust the repo)
 - replace cracked reflexded.exe with cracking script, so there won't be any obscure executable
 - a better folder structure - why storing `dedicatedserver.cfg` in the `docker` folder?
+- a proper and non-quirky editing of `dedicatedserver.cfg`
