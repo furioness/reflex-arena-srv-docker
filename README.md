@@ -68,3 +68,4 @@ Using a fresh wine version must fix the thing. Simply run `docker compose up --b
 - replace cracked reflexded.exe with cracking script, so there won't be any obscure executable
 - a better folder structure - why storing `dedicatedserver.cfg` in the `docker` folder?
 - a proper and non-quirky editing of `dedicatedserver.cfg`
+- add memory limits
