@@ -50,6 +50,11 @@ For some reason, `docker/dedicatedserver.cfg` is used only on the first `docker 
 Check the logs (`docker compose logs -f ded1` and try the thing on that server), if you see something like `Crypto API failed certificate check, error flags 0x00000008 for '/CN=cache7-waw1.steamcontent.com'`, then the system's certificate storage must be outdated.
 Using a fresh wine version must fix the thing. Simply run `docker compose up --build -d` to rebuild the image.
 
+### RAM usage
+It seems that memory usage is around 250MB without much dependence on a map.
+But it could drop to stable 15-60 due to swapping, so make sure you have swap enabled, so you can host a few servers on low RAM machines.
+Check `docker stats` for residual RAM usage and `cat /sys/fs/cgroup/system.slice/docker-<container-id-from docker stats>.scope/memory.swap.current` for the swap (in bytes).
+
 
 ## Possible future improvements
 - switch to native Linux build
