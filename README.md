@@ -8,6 +8,7 @@ A simpler way to host dedicated Reflex Arena servers with the following features
 - replays clean up on low disk space
 - auto-updating custom rulesets
 
+Original guide: https://github.com/m3fh4q/ReflexArenaDedicatedServerGuideLinux
 
 ## How to
 - get a Linux machine with Docker and Docker Compose installed
