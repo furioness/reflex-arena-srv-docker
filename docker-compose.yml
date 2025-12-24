@@ -1,3 +1,17 @@
+x-reflexded-base: &reflexded-base
+  image: reflexded:latest  # see service init_reflexded build
+  tty: true
+  restart: always
+  entrypoint: /runserver.sh
+  volumes:
+    - './reflexded/:/srv/steam/reflexded'
+    - './docker/runserver.sh:/runserver.sh:ro'
+  logging:
+    driver: "local"
+    options:
+      max-size: "10m"
+      max-file: "3"
+
 services:
   nginx:
     image: nginx:latest
@@ -15,6 +29,8 @@ services:
     cpus: 0.1
 
   init_reflexded:
+    image: reflexded:latest
+    pull_policy: never
     build: 
       context: ./docker/
       dockerfile: Dockerfile
@@ -59,43 +75,17 @@ services:
     cpus: 0.1
 
   ded1:
-    build: 
-      context: ./docker/
-      dockerfile: Dockerfile
-    tty: true
+    <<: *reflexded-base
     ports:
       - "25787:25787/tcp"
       - "25787:25787/udp"
-    volumes:
-     - './reflexded/:/srv/steam/reflexded'
-     - './docker/runserver.sh:/runserver.sh:ro'
-    restart: always
-    logging:
-      driver: "local"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    entrypoint: /runserver.sh
     environment:
       SRV_ARGS: "+sv_hostname #1 Bobr Rated http://bobr.furioness.net/ - demos +sv_gameport 25787"
 
   ded2:
-    build: 
-      context: ./docker/
-      dockerfile: Dockerfile
-    tty: true
+    <<: *reflexded-base
     ports:
       - "25788:25788/tcp"
       - "25788:25788/udp"
-    volumes:
-     - './reflexded/:/srv/steam/reflexded'
-     - './docker/runserver.sh:/runserver.sh:ro'
-    entrypoint: /runserver.sh
-    restart: always
-    logging:
-      driver: "local"
-      options:
-        max-size: "10m"
-        max-file: "3"
     environment:
       SRV_ARGS: "+sv_hostname #2 Bobr Rated http://bobr.furioness.net/ - demos +sv_gameport 25788"
