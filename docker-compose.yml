@@ -45,9 +45,12 @@ services:
       context: ./docker/
       dockerfile: rulesets_updater.Dockerfile
     command: bash -c "chmod +x /rulesets_updater.sh && /rulesets_updater.sh"
+    environment:
+      RULESETS_GIT_REPO: 'https://github.com/Nailok/reflex_rulesets.git'
     volumes:
       - './reflexded/:/srv/steam/reflexded'
       - './docker/rulesets_updater.sh:/rulesets_updater.sh'
+      - './rulesets_local/:/rulesets_local/:ro'
     restart: always
     logging:
       driver: "local"

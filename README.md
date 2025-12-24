@@ -41,8 +41,10 @@ Replays are removed once the system has used more than the specified amount of f
 If you are using cheap hosting with a small amount of storage, logs and package manager cache can quickly eat up the space, so you end up without any replays at all.
 
 ### Rulesets
-If you want to have your ruleset, you have to make a pull request to this repo https://github.com/Nailok/reflex_rulesets.git
-You can tag D-X in the Reflex Arena RU Discord server https://discord.com/invite/vQ3rx5m to speed up things.
+If you want to have your ruleset, you have to make a pull request to this repo https://github.com/Nailok/reflex_rulesets.git. The ruleset will be applied automatically within 5-10 minutes after the pull request is merged.
+You can tag D-X in the Reflex Arena RU Discord server https://discord.com/invite/vQ3rx5m to speed things up.
+
+Or just put your rulesets in the `rulesets_local` folder. They should be moved to the reflexded folder automatically.
 
 ### Dedicatedserver.cfg
 For some reason, `docker/dedicatedserver.cfg` is used only on the first `docker compose up` run, thus making ambiguous what file to edit. For now, edit both - from docker and inside reflexded folder. Why? The first one, so in case you ever reinit the build (by removing the sentiel file `reflexded/CONTAINER_ALREADY_STARTED`), the second one - it is the one actually used by the instances.
@@ -60,10 +62,8 @@ Check `docker stats` for residual RAM usage and `cat /sys/fs/cgroup/system.slice
 ## Possible future improvements
 - switch to native Linux build
 - use an event-based approach for
-  - rulesets: there must be some way to subscribe and keep listening for GitHub events
   - replays: there are tons of ionotify libs to listen for files, so the compressing and cleaning up can start right after the replay is completed
 - better compression: if stacking replays of the same maps, it must yield significantly better compression, as a significant portion of a replay is an embedded map itself
-- local rulesets: an option to use local rulesets
 - sanitized rulesets: there is a possibility that things like `sv_refpassword` can be included in it - need to sanitize
 - all the shenanigans with Docker: use Incus instead, and merge things
 - add/remove instances: some script to simplify things, that won't require manual edit of configs
