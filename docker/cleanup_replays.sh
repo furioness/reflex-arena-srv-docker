@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 echo "Compressing replays..."
 find "$REPLAY_DIR" -type f -name '*.rep' -printf '%T+ %p\n' | sort | cut -d' ' -f2- | while IFS= read -r file; do
