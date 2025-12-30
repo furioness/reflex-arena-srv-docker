@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+REPLAY_DIR=/replays
+
 echo "Compressing replays..."
 find "$REPLAY_DIR" -type f -name '*.rep' -printf '%T+ %p\n' | sort | cut -d' ' -f2- | while IFS= read -r file; do
     zip "${file}.zip" "$file" && rm "$file"

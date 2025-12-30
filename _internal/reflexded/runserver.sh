@@ -12,4 +12,4 @@ fi
 # sleep $((RANDOM % 3 + 1))
 
 # exec and handling of CTRL+C seems to have no effect here...
-WINEDEBUG=-all exec env wine ./reflexded.exe $SRV_ARGS
+WINEDEBUG=-all exec env wine ./reflexded.exe $SRV_ARGS_COMMON $SRV_ARGS

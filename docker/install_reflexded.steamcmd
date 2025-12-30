@@ -1,7 +1,0 @@
-@ShutdownOnFailedCommand 1
-@NoPromptForPassword 1
-@sSteamCmdForcePlatformType windows
-force_install_dir /srv/steam/reflexded
-login anonymous
-app_update 329740 validate
-quit

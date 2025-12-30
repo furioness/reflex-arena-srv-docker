@@ -10,11 +10,20 @@ cd /srv/steam/
 
 wget https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz && tar -xf steamcmd_linux.tar.gz
 
-./steamcmd.sh +runscript /docker/install_reflexded.steamcmd
+./steamcmd.sh \
+  +@ShutdownOnFailedCommand 1 \
+  +@sSteamCmdForcePlatformType windows \
+  +@NoPromptForPassword 1 \
+  +force_install_dir /srv/steam/reflexded \
+  +login anonymous \
+  +app_update 329740 validate \
+  +quit
+
+# explicit check, as steamcmd mostly returns 0 even on errors
+test -f /srv/steam/reflexded/reflexded.exe || exit 1
 
 cd reflexded
-cp /docker/dedicatedserver.cfg .
-cp /docker/reflexded.exe .
+cp /reflexded_fixed.exe reflexded.exe
 
 chmod o+x reflexded.exe
 mkdir -pm 755 replays

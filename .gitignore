@@ -1,1 +1,4 @@
 /reflexded
+!/reflexded/dedicatedserver.cfg
+
+docker-compose.yml

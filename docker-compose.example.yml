@@ -1,0 +1,97 @@
+x-reflexded-base: &reflexded-base
+  image: reflexded:latest  # see service init_reflexded build
+  tty: true
+  restart: always
+  volumes:
+    - './reflexded/:/srv/steam/reflexded/'
+  logging:
+    driver: 'local'
+    options:
+      max-size: '10m'
+      max-file: '3'
+
+x-dedicatedserver-cfg-env: &dedicatedserver-cfg-env
+  SRV_ARGS_COMMON: >
+    +sv_maxclients 6
+    +sv_steam 1
+    +sv_allowedit 0
+    +sv_country PL
+    +sv_startmap Fusion
+    +sv_startwmap 608417285
+    +sv_startruleset cr2
+    +sv_startmode 1v1
+    +sv_refpassword epicrefpass
+    +rcon_password epicrcon
+
+services:
+  ded1:
+    <<: *reflexded-base
+    ports:
+      - '25787:25787/tcp'
+      - '25787:25787/udp'
+    environment:
+      <<: *dedicatedserver-cfg-env
+      SRV_ARGS: '+sv_hostname #1 Bobr Rated http://bobr.furioness.net/ - demos +sv_gameport 25787'
+
+  ded2:
+    <<: *reflexded-base
+    ports:
+      - '25788:25788/tcp'
+      - '25788:25788/udp'
+    environment:
+      <<: *dedicatedserver-cfg-env
+      SRV_ARGS: '+sv_hostname #2 Bobr Rated http://bobr.furioness.net/ - demos +sv_gameport 25788'
+
+  init_reflexded:
+    image: 'reflexded:latest'
+    pull_policy: never
+    build:
+      context: _internal/reflexded/
+    entrypoint: /install_reflexded.sh
+    volumes:
+      - './reflexded/:/srv/steam/reflexded'
+    restart: 'no' # This service should not restart once completed.
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - './_internal/nginx/nginx.conf:/etc/nginx/nginx.conf:ro'
+      - './reflexded/replays/:/usr/share/nginx/html/:ro'
+    restart: always
+    logging:
+      driver: 'local'
+      options:
+        max-size: '10m'
+        max-file: '3'
+    cpus: 0.1
+
+  rulesets_updater:
+    build: 
+      context: _internal/ruleset_service/
+    environment:
+      RULESETS_GIT_REPO: 'https://github.com/Nailok/reflex_rulesets.git'
+    volumes:
+      - './reflexded/:/srv/steam/reflexded'
+      - './rulesets_local/:/rulesets_local/:ro'
+    restart: always
+    logging:
+      driver: 'local'
+      options:
+        max-size: '10m'
+        max-file: '3'
+    cpus: 0.1
+
+  replays_cleaner:
+    build: 
+      context: _internal/replay_service/
+    volumes:
+      - './reflexded/replays/:/replays/'
+    restart: always
+    logging:
+      driver: 'local'
+      options:
+        max-size: '10m'
+        max-file: '3'
+    cpus: 0.1

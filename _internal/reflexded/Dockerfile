@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN dpkg --add-architecture i386 \
  && apt-get update \
- && apt-get install -y gpg htop nano wget \
+ && apt-get install -y gpg htop nano wget ca-certificates libc6:i386 \
  && mkdir -pm755 /etc/apt/keyrings  \
  && wget -O - https://dl.winehq.org/wine-builds/winehq.key | gpg --dearmor -o /etc/apt/keyrings/winehq-archive.key - \
  && wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/debian/dists/bookworm/winehq-bookworm.sources \
@@ -21,3 +21,9 @@ RUN WINEARCH=win32 wineboot --init \
 
 # RUN useradd steam -m -r -s /bin/bash
 # USER steam
+
+COPY reflexded_fixed.exe /
+COPY --chmod=+x runserver.sh /
+COPY --chmod=+x install_reflexded.sh /
+
+ENTRYPOINT ["/runserver.sh"]
