@@ -20,8 +20,8 @@ x-dedicatedserver-cfg-env: &dedicatedserver-cfg-env
     +sv_startwmap 608417285
     +sv_startruleset cr2
     +sv_startmode 1v1
-    +sv_refpassword epicrefpass
-    +rcon_password epicrcon
+    # +sv_refpassword yourrefpassword
+    # +rcon_password yourrconpassword
 
 services:
   ded1:
