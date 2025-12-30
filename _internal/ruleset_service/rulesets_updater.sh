@@ -1,12 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-CONTAINER_ALREADY_STARTED='/srv/steam/reflexded/CONTAINER_ALREADY_STARTED'
-if [ ! -e $CONTAINER_ALREADY_STARTED ]; then
-    sleep 10
-    exit 0
-fi
-
 GIT_DIR='/rulesets_git'
 LOCAL_DIR='/rulesets_local'
 TARGET_DIR='/srv/steam/reflexded'
