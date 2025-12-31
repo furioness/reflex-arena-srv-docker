@@ -1,4 +1,5 @@
 /reflexded
 !/reflexded/dedicatedserver.cfg
 
-docker-compose.yml
+/docker-compose.yml
+/.env
