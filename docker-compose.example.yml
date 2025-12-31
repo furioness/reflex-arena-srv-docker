@@ -1,6 +1,7 @@
 x-reflexded-base: &reflexded-base
   image: reflexded:latest  # see service init_reflexded build
   tty: true
+  init: true
   restart: always
   volumes:
     - './reflexded/:/srv/steam/reflexded/'
@@ -48,6 +49,7 @@ services:
     build:
       context: _internal/reflexded/
     entrypoint: /install_reflexded.sh
+    init: true
     volumes:
       - './reflexded/:/srv/steam/reflexded'
     restart: 'no' # This service should not restart once completed.
@@ -70,6 +72,7 @@ services:
   rulesets_updater:
     build: 
       context: _internal/ruleset_service/
+    init: true
     environment:
       RULESETS_GIT_REPO: 'https://github.com/Nailok/reflex_rulesets.git'
     volumes:
@@ -86,6 +89,7 @@ services:
   replays_cleaner:
     build: 
       context: _internal/replay_service/
+    init: true
     volumes:
       - './reflexded/replays/:/replays/'
     restart: always
