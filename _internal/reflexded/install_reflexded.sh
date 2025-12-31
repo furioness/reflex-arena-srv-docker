@@ -10,16 +10,18 @@ cd /srv/steam/
 
 wget https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz && tar -xf steamcmd_linux.tar.gz
 
-./steamcmd.sh \
-  +@ShutdownOnFailedCommand 1 \
-  +@sSteamCmdForcePlatformType windows \
-  +@NoPromptForPassword 1 \
-  +force_install_dir /srv/steam/reflexded \
-  +login anonymous \
-  +app_update 329740 validate \
-  +quit
+./steamcmd.sh <<'EOF'
+@ShutdownOnFailedCommand 1
+@sSteamCmdForcePlatformType windows
+@NoPromptForPassword 1
+force_install_dir /srv/steam/reflexded
+login anonymous
+app_update 329740 validate
+quit
+EOF
 
-# explicit check, as steamcmd mostly returns 0 even on errors
+# explicit check, as steamcmd sometimes returns 0 even on errors
+# at least in running with arguments format, the stdin seems to be fine
 test -f /srv/steam/reflexded/reflexded.exe || exit 1
 
 cd reflexded
