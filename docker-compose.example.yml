@@ -1,8 +1,11 @@
 x-reflexded-base: &reflexded-base
-  image: reflexded:latest  # see service init_reflexded build
+  image: reflexded:latest  # see service reflexded_installer build
   tty: true
   init: true
   restart: always
+  depends_on:
+    reflexded_installer:
+      condition: service_completed_successfully
   volumes:
     - './reflexded/:/srv/steam/reflexded/'
   logging:
@@ -43,7 +46,7 @@ services:
       <<: *dedicatedserver-cfg-env
       SRV_ARGS: '+sv_hostname #2 Bobr Rated http://bobr.furioness.net/ - demos +sv_gameport 25788'
 
-  init_reflexded:
+  reflexded_installer:
     image: 'reflexded:latest'
     pull_policy: never
     build:

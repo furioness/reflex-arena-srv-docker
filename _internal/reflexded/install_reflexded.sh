@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-CONTAINER_ALREADY_STARTED="/srv/steam/reflexded/CONTAINER_ALREADY_STARTED"
-if [ -e $CONTAINER_ALREADY_STARTED ]; then
-    exit 0
+SENTINEL=/srv/steam/reflexded/INSTALL_FINISHED_SENTINEL
+if [ -f $SENTINEL ]; then
+  echo "reflexded is already installed, skipping"
+  exit 0
 fi
 
 cd /srv/steam/
@@ -28,6 +29,9 @@ cd reflexded
 cp /reflexded_fixed.exe reflexded.exe
 
 chmod o+x reflexded.exe
-mkdir -pm 755 replays
 
-touch $CONTAINER_ALREADY_STARTED
+# -p is not just for creating parents, it's for being silent, if the dir is already there
+mkdir -p replays
+chmod 755 replays
+
+touch $SENTINEL
