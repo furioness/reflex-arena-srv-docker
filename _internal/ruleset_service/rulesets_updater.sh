@@ -1,33 +1,35 @@
 #!/usr/bin/env bash
 set -euo pipefail
+shopt -s nullglob
 
 GIT_DIR='/rulesets_git'
 LOCAL_DIR='/rulesets_local'
 TARGET_DIR='/srv/steam/reflexded'
+TMP="$TARGET_DIR/.rulesets.tmp"
 
 apply_rulesets() {
   echo 'Applying rulesets updates...'
 
-  tmp=$(mktemp -d)
-  (
-      # non-matched globs don't rise an error, plus don't enter for loop
-      # plus a sub-shell, so shopt are confined - just in case
-      # and the final mv from a temp dir instead of direct cp - for a file-level atomicity
-      shopt -s nullglob
+  rm -rf "$TMP"
+  mkdir -p "$TMP"
 
-      cp "$GIT_DIR"/ruleset_* "$tmp" 2>/dev/null || true
-      cp "$LOCAL_DIR"/ruleset_* "$tmp" 2>/dev/null || true
+  # Prioritize git over local, so if local will ever be commited or just a name clash,
+  # players won't have to wonder which version they are on
+  #
+  # Why not just cp into the target? cp ins't atomic. mv is,
+  # but only when on the same FS (thus, TMP is in the target dir).
+  cp "$LOCAL_DIR"/ruleset_* "$TMP" 2>/dev/null || true
+  cp "$GIT_DIR"/ruleset_* "$TMP" 2>/dev/null || true
 
-      rm -f "$TARGET_DIR"/ruleset_*.cfg
+  # if we exit after this line, there won't be any ruleset - fine.
+  # I don't expect ded containers to run without this anyway.
+  rm -f "$TARGET_DIR"/ruleset_*.cfg
 
-      cd "$tmp"
-      for f in ruleset_*.cfg; do
-        mv "$f" "$TARGET_DIR/"
-      done
-    )
+  for ruleset in "$TMP"/ruleset_*.cfg; do
+    mv "$ruleset" "$TARGET_DIR/"
+  done
 
-  rmdir "$tmp"
-
+  rm -rf "$TMP"
   echo "Rulesets are applied."
 }
 
