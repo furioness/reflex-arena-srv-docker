@@ -1,0 +1,13 @@
+[project]
+name = "replay-service"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "arrow>=1.4.0",
+    "construct>=2.10.70",
+    "construct-typing>=0.7.0",
+    "sortedcontainers>=2.4.0",
+    "sortedcontainers-stubs>=2.4.3",
+]

@@ -1,4 +1,4 @@
-FROM debian:12
+FROM python:3.13-slim-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -6,6 +6,6 @@ RUN apt-get update \
  && apt-get install -y zip \
  && rm -rf /var/lib/apt/lists/*
 
-COPY --chmod=+x cleanup_replays.sh /
+COPY --chmod=+x src/ /replay_service/
 
-ENTRYPOINT ["/cleanup_replays.sh"]
+ENTRYPOINT ["/replay_service/main.py"]
