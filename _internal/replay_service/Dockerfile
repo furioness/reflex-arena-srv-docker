@@ -6,6 +6,6 @@ RUN apt-get update \
  && apt-get install -y zip \
  && rm -rf /var/lib/apt/lists/*
 
-COPY --chmod=+x src/ /replay_service/
+COPY backend/ /replay_service/
 
 ENTRYPOINT ["/replay_service/main.py"]

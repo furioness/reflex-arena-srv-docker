@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import ClassVar
 from typing import Self
 
+from arrow import Arrow
 from construct import Container
 
 
@@ -24,7 +25,7 @@ class ReplayMetadata:
     map_title: str
     players: list[Player]
     marker_count: int
-    started_at: datetime
+    started_at: Arrow|datetime  #  construct parses as Arrow, but it's habitual to use datetime
 
     @classmethod
     def from_construct(cls, cont: Container) -> Self:

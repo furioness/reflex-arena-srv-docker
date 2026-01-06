@@ -1,6 +1,7 @@
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
+from struct import error
 
 from construct import (
     Struct,
@@ -16,7 +17,7 @@ from construct import (
 )
 from construct.core import ConstructError
 
-from model import ReplayMetadata, Replay
+from src.model import ReplayMetadata, Replay
 
 PlayerStruct = Struct(
     "name" / PaddedString(32, "utf-8"),
@@ -83,7 +84,7 @@ def parse_and_ensure_compressed(replay_path: Path) -> Replay:
         else:
             raise ValueError(f"Unsupported replay file type: {replay_path.suffix}")
         parsed_meta = ReplayMetadata.from_construct(replay_cont)
-    except ConstructError as exc:
+    except (ConstructError, error) as exc:
         print(f"Failed to parse replay {replay_path}", exc)
 
     filename = _ensure_compressed(replay_path)
@@ -94,10 +95,3 @@ def parse_and_ensure_compressed(replay_path: Path) -> Replay:
         downloadable=True,
         metadata=parsed_meta,
     )
-
-
-if __name__ == "__main__":
-    path = Path(
-        "replays/The_Purple_Catalyst_fuggywuggy_luny_25Dec2025_194521_0markers.rep.zip"
-    )
-    print(parse_and_ensure_compressed(path))

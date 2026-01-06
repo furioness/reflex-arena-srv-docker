@@ -1,30 +1,14 @@
 import hashlib
 import json
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from itertools import batched
 from pathlib import Path
-from queue import SimpleQueue
 from typing import Callable
 
 from sortedcontainers import SortedListWithKey
 
-from model import Replay, Header, ChunkHeader
-from parser import parse_and_ensure_compressed
-
-REPLAY_FOLDER = Path("./replays")
-DB_PATH = Path("./db/")
-DB_HEADER_PATH = DB_PATH / "replays_header.json"
-HEADER_VERSION = 1
-CHUNK_MAX_SIZE = 250  # changing will require dropping DB
-
-
-@dataclass(frozen=True)
-class ReplayEvent:
-    path: Path
-
-
-class CleanUpEvent: ...
+from src.model import Replay, Header, ChunkHeader
+from src.parser import parse_and_ensure_compressed
 
 
 class ReplayDB:
@@ -33,11 +17,15 @@ class ReplayDB:
         path: Path,
         replay_folder: Path,
         reconcile_on_init=True,
+        _chunk_at_count=250,  # changing will require dropping DB
     ):
-        self.path = path
+        self._db_path = path
+        self._db_header_path = path / "replays_header.json"
         self.replay_folder = replay_folder
 
         self.reconcile_on_init = reconcile_on_init
+        self._chunk_max_size = _chunk_at_count
+
         self.by_filename: dict[str, Replay] = {}
 
         self._sort_key: Callable[[Replay], datetime] = lambda replay: replay.finished_at
@@ -54,40 +42,45 @@ class ReplayDB:
             self.reconcile()
 
     def _load_or_init_on_fs(self):
-        if DB_HEADER_PATH.exists():
+        if self._db_header_path.exists():
             self._load_from_fs()
         else:
             self._init_header_fs()
 
     def _init_header_fs(self):
-        DB_PATH.mkdir(parents=True, exist_ok=True)
+        self._db_path.mkdir(parents=True, exist_ok=True)
         self._write_atomic(
-            DB_HEADER_PATH,
+            self._db_header_path,
             json.dumps(
                 Header(
                     updated_at=datetime.now(),
                     total_count=0,
                     chunk_headers=[],
-                    max_chunk_size=CHUNK_MAX_SIZE,
+                    max_chunk_size=self._chunk_max_size,
                 ).to_dict()
             ),
         )
 
     def _load_from_fs(self):
-        with open(DB_HEADER_PATH, "r") as header_f:
+        with open(self._db_header_path, "r") as header_f:
             header = json.load(header_f)
-        header = Header.from_dict(header, CHUNK_MAX_SIZE)
+        header = Header.from_dict(header, self._chunk_max_size)
+
         total_replay_count = 0
         for chunk_header in header.chunk_headers:
-            with open(DB_PATH / chunk_header.filename, "r") as chunk_f:
+            with open(self._db_path / chunk_header.filename, "r") as chunk_f:
                 chunk = json.load(chunk_f)
+
             chunk_replay_count = 0
             for filename, replay_data in chunk.items():
                 self.add_if_missing(Replay.from_jsonable(replay_data, filename))
                 chunk_replay_count += 1
+
             assert chunk_replay_count == chunk_header.count
             total_replay_count += chunk_replay_count
+
         assert total_replay_count == header.total_count
+
         self._unsaved_added.clear()
         self._unsaved_mutated.clear()
 
@@ -96,7 +89,7 @@ class ReplayDB:
             return
 
         header = Header.from_dict(
-            json.loads(DB_HEADER_PATH.read_text()), CHUNK_MAX_SIZE
+            json.loads(self._db_header_path.read_text()), self._chunk_max_size
         )
 
         affected_chunk_idxs = set()
@@ -105,12 +98,12 @@ class ReplayDB:
                 self.by_time.index(rpl) for rpl in self._unsaved_added
             )
             for chunk_idx in range(
-                earliest_unsaved_added_idx // CHUNK_MAX_SIZE,
-                len(self.by_time) // CHUNK_MAX_SIZE + 1,
+                earliest_unsaved_added_idx // self._chunk_max_size,
+                len(self.by_time) // self._chunk_max_size + 1,
             ):
                 affected_chunk_idxs.add(chunk_idx)
         for replay in self._unsaved_mutated:
-            affected_chunk_idxs.add(self.by_time.index(replay) // CHUNK_MAX_SIZE)
+            affected_chunk_idxs.add(self.by_time.index(replay) // self._chunk_max_size)
 
         self._unsaved_added.clear()
         self._unsaved_mutated.clear()
@@ -122,7 +115,7 @@ class ReplayDB:
             )
         }
 
-        for chunk_idx, db_chunk in enumerate(batched(self.by_time, CHUNK_MAX_SIZE)):
+        for chunk_idx, db_chunk in enumerate(batched(self.by_time, self._chunk_max_size)):
             if chunk_idx not in affected_chunk_idxs:
                 continue
 
@@ -136,7 +129,7 @@ class ReplayDB:
             ).hexdigest()
             chunk_name = f"chunk_{chunk_idx}_{chunk_hash}.json"
 
-            self._write_atomic(DB_PATH / chunk_name, chunk_json)
+            self._write_atomic(self._db_path / chunk_name, chunk_json)
 
             chunk_meta = ChunkHeader(
                 filename=chunk_name,
@@ -153,13 +146,13 @@ class ReplayDB:
         header.total_count = sum(chunk.count for chunk in header.chunk_headers)
         header.updated_at = datetime.now(timezone.utc)
 
-        self._write_atomic(DB_HEADER_PATH, json.dumps(header.to_dict()))
+        self._write_atomic(self._db_header_path, json.dumps(header.to_dict()))
 
         # clean up
         for chunk_path in old_chunk_paths:
-            (DB_PATH / chunk_path).unlink()
+            (self._db_path / chunk_path).unlink()
 
-        for tmp in DB_PATH.glob("*.tmp"):
+        for tmp in self._db_path.glob("*.tmp"):
             tmp.unlink()
 
     def add_if_missing(self, replay: Replay) -> None:
@@ -168,18 +161,21 @@ class ReplayDB:
 
         self.by_filename[replay.filename] = replay
         self.by_time.add(replay)
+
         self._unsaved_added.add(replay)
 
     def _mark_fs_present(self, db_replay: Replay):
         if db_replay.downloadable:
             return
         db_replay.downloadable = True
+
         self._unsaved_mutated.add(db_replay)
 
     def _mark_fs_missing(self, db_replay: Replay):
         if not db_replay.downloadable:
             return
         db_replay.downloadable = False
+
         self._unsaved_mutated.add(db_replay)
 
     def reconcile(self):
@@ -207,35 +203,10 @@ class ReplayDB:
     @staticmethod
     def _write_atomic(path: Path, obj: str | bytes):
         tmp = path.with_suffix(path.suffix + ".tmp")
+
         if type(obj) is bytes:
             tmp.write_bytes(obj)
         else:
             tmp.write_text(obj)
+
         tmp.replace(path)
-
-
-def replay_worker(queue: SimpleQueue[ReplayEvent | CleanUpEvent]):
-    db = ReplayDB(DB_PATH, REPLAY_FOLDER)
-
-    while True:
-        match queue.get():
-            case ReplayEvent(path=path):
-                handle_replay(db, path)
-            case CleanUpEvent():
-                clean_up(db)
-            case _:
-                raise ValueError("Unknown event type")
-
-
-# if __name__ == "__main__":
-#     replay_queue = SimpleQueue()
-#     threading.Thread(
-#         target=ionotify_producer, args=(replay_queue,), daemon=True
-#     ).start()
-#     threading.Thread(target=replay_worker, args=(replay_queue,), daemon=True).start()
-#     threading.Thread(
-#         target=clean_up_producer, args=(replay_queue,), daemon=True
-#     ).start()
-
-if __name__ == "__main__":
-    db = ReplayDB(DB_PATH, REPLAY_FOLDER)
