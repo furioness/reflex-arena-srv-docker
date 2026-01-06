@@ -33,10 +33,10 @@ class CleanUpEvent: ...
 
 class ReplayDB:
     def __init__(
-        self,
-        path: Path,
-        replay_folder: Path,
-        reconcile_on_init=True,
+            self,
+            path: Path,
+            replay_folder: Path,
+            reconcile_on_init=True,
     ):
         self.path = path
         self.replay_folder = replay_folder
@@ -48,7 +48,9 @@ class ReplayDB:
         self.by_time: SortedListWithKey[Replay, datetime] = SortedListWithKey(
             key=self._sort_key
         )
-        self._unsaved: set[Replay] = set()
+
+        self._unsaved_mutated: set[Replay] = set()
+        self._unsaved_added: set[Replay] = set()
 
         self._load_or_init_on_fs()
 
@@ -126,7 +128,8 @@ class ReplayDB:
                 assert chunk_replay_count == chunk_meta["count"]
                 total_replay_count += chunk_replay_count
             assert total_replay_count == header["total_count"]
-            self._unsaved.clear()
+            self._unsaved_added.clear()
+            self._unsaved_mutated.clear()
         else:  # init empty db
             DB_PATH.mkdir(parents=True, exist_ok=True)
             self._write_atomic(
@@ -203,14 +206,22 @@ class ReplayDB:
         idx = 9 -> 0
         """
 
-        if not self._unsaved:
+        if not self._unsaved_added and not self._unsaved_mutated:
             return
 
         header = json.loads(DB_HEADER_PATH.read_text())
 
         affected_chunk_idxs = set()
-        for replay in self._unsaved:
+        if self._unsaved_added:
+            earliest_unsaved_added_idx = min(self.by_time.index(rpl) for rpl in self._unsaved_added)
+            for chunk_idx in range(earliest_unsaved_added_idx // CHUNK_MAX_SIZE,
+                                   len(self.by_time) // CHUNK_MAX_SIZE + 1):
+                affected_chunk_idxs.add(chunk_idx)
+        for replay in self._unsaved_mutated:
             affected_chunk_idxs.add(self.by_time.index(replay) // CHUNK_MAX_SIZE)
+
+        self._unsaved_added.clear()
+        self._unsaved_mutated.clear()
 
         old_chunk_paths = {
             header["chunks"][idx]["filename"]
@@ -268,10 +279,10 @@ class ReplayDB:
             """
             chunk_meta = {
                 "filename": chunk_name,
-                "latest_replay_ts": max(
+                "oldest_replay_ts": min(
                     chunk, key=self._sort_key
                 ).finished_at.isoformat(),
-                "oldest_replay_ts": min(
+                "latest_replay_ts": max(
                     chunk, key=self._sort_key
                 ).finished_at.isoformat(),
                 "count": len(chunk),
@@ -293,34 +304,32 @@ class ReplayDB:
         for tmp in DB_PATH.glob("*.tmp"):
             tmp.unlink()
 
-        self._unsaved.clear()
-
     def add_if_missing(self, replay: Replay) -> None:
         if replay.filename in self.by_filename:
             return
 
         self.by_filename[replay.filename] = replay
         self.by_time.add(replay)
-        self._unsaved.add(replay)
+        self._unsaved_added.add(replay)
 
     def _mark_fs_present(self, db_replay: Replay):
         if db_replay.downloadable:
             return
         db_replay.downloadable = True
-        self._unsaved.add(db_replay)
+        self._unsaved_mutated.add(db_replay)
 
     def _mark_fs_missing(self, db_replay: Replay):
         if not db_replay.downloadable:
             return
         db_replay.downloadable = False
-        self._unsaved.add(db_replay)
+        self._unsaved_mutated.add(db_replay)
 
     def reconcile(self):
         present_replays = set()
         for replay_path in self.replay_folder.iterdir():
             if not (
-                replay_path.name.endswith(".rep")
-                or replay_path.name.endswith(".rep.zip")
+                    replay_path.name.endswith(".rep")
+                    or replay_path.name.endswith(".rep.zip")
             ):
                 continue
 
