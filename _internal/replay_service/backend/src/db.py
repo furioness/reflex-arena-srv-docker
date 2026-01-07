@@ -49,9 +49,12 @@ class ReplayDB:
 
     def _load_or_init_on_fs(self):
         if self._db_header_path.exists():
+            logger.info("Found existing DB, loading...")
             self._load_from_fs()
         else:
+            logger.info("No DB found, initializing...")
             self._init_header_fs()
+        logger.info(f"Initialized DB with {len(self.by_time)} replays.")
 
     def _init_header_fs(self):
         self._db_path.mkdir(parents=True, exist_ok=True)
@@ -93,6 +96,9 @@ class ReplayDB:
     def save_to_fs(self):
         if not self._unsaved_added and not self._unsaved_mutated:
             return
+
+        logger.info(
+            f"Saving DB to FS with {len(self._unsaved_added)} added and {len(self._unsaved_mutated)} mutated replays...")
 
         header = Header.from_dict(
             json.loads(self._db_header_path.read_text()), self._chunk_max_size
@@ -163,9 +169,13 @@ class ReplayDB:
         for tmp in self._db_path.glob("*.tmp"):
             tmp.unlink()
 
+        logger.info("DB save completed.")
+
     def ingest_replay(self, replay_path: Path) -> Replay:
         if replay := self.by_filename.get(replay_path.name):
             return replay
+
+        logger.info(f"Ingesting replay {replay_path.name}")
 
         parsing_result = self._parse(replay_path)
         compressed_path = self._ensure_compressed(replay_path)
@@ -203,6 +213,7 @@ class ReplayDB:
         self._unsaved_mutated.add(db_replay)
 
     def reconcile(self):
+        logger.info("Reconciling DB with FS...")
         present_replays = set()
         for replay_path in self.replay_folder.iterdir():
             if not (
@@ -222,6 +233,7 @@ class ReplayDB:
                 self._mark_fs_missing(replay)
 
         self.save_to_fs()
+        logger.info("Reconciliation complete.")
 
     @classmethod
     def _parse(cls, replay_path: Path) -> ParsedReplay:
@@ -236,7 +248,7 @@ class ReplayDB:
                 raise ValueError(f"Unsupported replay file type: {replay_path.suffix}")
         except (ConstructError, error) as exc:
             metadata = None
-            print(f"Failed to parse replay {replay_path}", exc)
+            logger.warning(f"Failed to parse replay {replay_path}", exc_info=exc)
 
         return ParsedReplay(
             finished_at=parse_finished_at(replay_path.name), metadata=metadata

@@ -1,8 +1,16 @@
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from queue import SimpleQueue
 
 from src.db import ReplayDB
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+
+logger = logging.getLogger(__name__)
 
 REPLAY_FOLDER = Path("../replays")
 DB_PATH = Path("../db/")
