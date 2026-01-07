@@ -47,6 +47,125 @@ class ReplayDB:
         if self.reconcile_on_init:
             self.reconcile()
 
+    def ingest_replay(self, filename: str) -> Replay:
+        replay_path = self.replay_folder / filename
+        if replay := self.by_filename.get(replay_path.name):
+            return replay
+
+        logger.info(f"Ingesting replay {replay_path.name}")
+
+        parsing_result = self._parse(replay_path)
+        compressed_path = self._ensure_compressed(replay_path)
+        replay = Replay(
+            filename=compressed_path.name,
+            downloadable=True,
+            finished_at=parsing_result.finished_at,
+            metadata=parsing_result.metadata,
+        )
+
+        return self._add_if_missing(replay)
+
+    def save_to_fs(self):
+        if not self._unsaved_added and not self._unsaved_mutated:
+            return
+
+        logger.info(
+            f"Saving DB to FS with {len(self._unsaved_added)} added and {len(self._unsaved_mutated)} mutated replays...")
+
+        header = Header.from_dict(
+            json.loads(self._db_header_path.read_text()), self._chunk_max_size
+        )
+
+        affected_chunk_idxs = set()
+        if self._unsaved_added:
+            earliest_unsaved_added_idx = min(
+                self.by_time.index(rpl) for rpl in self._unsaved_added
+            )
+            for chunk_idx in range(
+                    earliest_unsaved_added_idx // self._chunk_max_size,
+                    len(self.by_time) // self._chunk_max_size + 1,
+            ):
+                affected_chunk_idxs.add(chunk_idx)
+        for replay in self._unsaved_mutated:
+            affected_chunk_idxs.add(self.by_time.index(replay) // self._chunk_max_size)
+
+        self._unsaved_added.clear()
+        self._unsaved_mutated.clear()
+
+        old_chunk_paths = {
+            header.chunk_headers[idx].filename
+            for idx in filter(
+                lambda idx: idx < len(header.chunk_headers), affected_chunk_idxs
+            )
+        }
+
+        for chunk_idx, db_chunk in enumerate(
+                batched(self.by_time, self._chunk_max_size)
+        ):
+            if chunk_idx not in affected_chunk_idxs:
+                continue
+
+            db_chunk = tuple(db_chunk)
+
+            chunk_json = {replay.filename: replay.to_jsonable() for replay in db_chunk}
+            chunk_json = json.dumps(chunk_json).encode()
+
+            chunk_hash = hashlib.blake2s(
+                chunk_json, digest_size=6, usedforsecurity=False
+            ).hexdigest()
+            chunk_name = f"chunk_{chunk_idx}_{chunk_hash}.json"
+
+            self._write_atomic(self._db_path / chunk_name, chunk_json)
+
+            chunk_meta = ChunkHeader(
+                filename=chunk_name,
+                oldest_replay_ts=min(db_chunk, key=self._sort_key).finished_at,
+                latest_replay_ts=max(db_chunk, key=self._sort_key).finished_at,
+                count=len(db_chunk),
+            )
+
+            if chunk_idx < len(header.chunk_headers):
+                header.chunk_headers[chunk_idx] = chunk_meta
+            else:
+                header.chunk_headers.append(chunk_meta)
+
+        header.total_count = sum(chunk.count for chunk in header.chunk_headers)
+        header.updated_at = datetime.now(timezone.utc)
+
+        self._write_atomic(self._db_header_path, json.dumps(header.to_dict()))
+
+        # clean up
+        for chunk_path in old_chunk_paths:
+            (self._db_path / chunk_path).unlink()
+
+        for tmp in self._db_path.glob("*.tmp"):
+            tmp.unlink()
+
+        logger.info("DB save completed.")
+
+    def reconcile(self):
+        logger.info("Reconciling DB with FS...")
+        present_replays = set()
+        for replay_path in self.replay_folder.iterdir():
+            if not (
+                    replay_path.name.endswith(".rep")
+                    or replay_path.name.endswith(".rep.zip")
+            ):
+                continue
+
+            if replay := self.by_filename.get(replay_path.name):
+                self._mark_fs_present(replay)
+            else:
+                replay = self.ingest_replay(replay_path)
+            present_replays.add(replay)
+
+        for replay in self.by_time:
+            if replay not in present_replays:
+                self._mark_fs_missing(replay)
+
+        self.save_to_fs()
+        logger.info("Reconciliation complete.")
+
     def _load_or_init_on_fs(self):
         if self._db_header_path.exists():
             logger.info("Found existing DB, loading...")
@@ -93,101 +212,6 @@ class ReplayDB:
         self._unsaved_added.clear()
         self._unsaved_mutated.clear()
 
-    def save_to_fs(self):
-        if not self._unsaved_added and not self._unsaved_mutated:
-            return
-
-        logger.info(
-            f"Saving DB to FS with {len(self._unsaved_added)} added and {len(self._unsaved_mutated)} mutated replays...")
-
-        header = Header.from_dict(
-            json.loads(self._db_header_path.read_text()), self._chunk_max_size
-        )
-
-        affected_chunk_idxs = set()
-        if self._unsaved_added:
-            earliest_unsaved_added_idx = min(
-                self.by_time.index(rpl) for rpl in self._unsaved_added
-            )
-            for chunk_idx in range(
-                earliest_unsaved_added_idx // self._chunk_max_size,
-                len(self.by_time) // self._chunk_max_size + 1,
-            ):
-                affected_chunk_idxs.add(chunk_idx)
-        for replay in self._unsaved_mutated:
-            affected_chunk_idxs.add(self.by_time.index(replay) // self._chunk_max_size)
-
-        self._unsaved_added.clear()
-        self._unsaved_mutated.clear()
-
-        old_chunk_paths = {
-            header.chunk_headers[idx].filename
-            for idx in filter(
-                lambda idx: idx < len(header.chunk_headers), affected_chunk_idxs
-            )
-        }
-
-        for chunk_idx, db_chunk in enumerate(
-            batched(self.by_time, self._chunk_max_size)
-        ):
-            if chunk_idx not in affected_chunk_idxs:
-                continue
-
-            db_chunk = tuple(db_chunk)
-
-            chunk_json = {replay.filename: replay.to_jsonable() for replay in db_chunk}
-            chunk_json = json.dumps(chunk_json).encode()
-
-            chunk_hash = hashlib.blake2s(
-                chunk_json, digest_size=6, usedforsecurity=False
-            ).hexdigest()
-            chunk_name = f"chunk_{chunk_idx}_{chunk_hash}.json"
-
-            self._write_atomic(self._db_path / chunk_name, chunk_json)
-
-            chunk_meta = ChunkHeader(
-                filename=chunk_name,
-                oldest_replay_ts=min(db_chunk, key=self._sort_key).finished_at,
-                latest_replay_ts=max(db_chunk, key=self._sort_key).finished_at,
-                count=len(db_chunk),
-            )
-
-            if chunk_idx < len(header.chunk_headers):
-                header.chunk_headers[chunk_idx] = chunk_meta
-            else:
-                header.chunk_headers.append(chunk_meta)
-
-        header.total_count = sum(chunk.count for chunk in header.chunk_headers)
-        header.updated_at = datetime.now(timezone.utc)
-
-        self._write_atomic(self._db_header_path, json.dumps(header.to_dict()))
-
-        # clean up
-        for chunk_path in old_chunk_paths:
-            (self._db_path / chunk_path).unlink()
-
-        for tmp in self._db_path.glob("*.tmp"):
-            tmp.unlink()
-
-        logger.info("DB save completed.")
-
-    def ingest_replay(self, replay_path: Path) -> Replay:
-        if replay := self.by_filename.get(replay_path.name):
-            return replay
-
-        logger.info(f"Ingesting replay {replay_path.name}")
-
-        parsing_result = self._parse(replay_path)
-        compressed_path = self._ensure_compressed(replay_path)
-        replay = Replay(
-            filename=compressed_path.name,
-            downloadable=True,
-            finished_at=parsing_result.finished_at,
-            metadata=parsing_result.metadata,
-        )
-
-        return self._add_if_missing(replay)
-
     def _add_if_missing(self, replay: Replay) -> Replay:
         if replay.filename in self.by_filename:
             return replay
@@ -212,28 +236,6 @@ class ReplayDB:
 
         self._unsaved_mutated.add(db_replay)
 
-    def reconcile(self):
-        logger.info("Reconciling DB with FS...")
-        present_replays = set()
-        for replay_path in self.replay_folder.iterdir():
-            if not (
-                replay_path.name.endswith(".rep")
-                or replay_path.name.endswith(".rep.zip")
-            ):
-                continue
-
-            if replay := self.by_filename.get(replay_path.name):
-                self._mark_fs_present(replay)
-            else:
-                replay = self.ingest_replay(replay_path)
-            present_replays.add(replay)
-
-        for replay in self.by_time:
-            if replay not in present_replays:
-                self._mark_fs_missing(replay)
-
-        self.save_to_fs()
-        logger.info("Reconciliation complete.")
 
     @classmethod
     def _parse(cls, replay_path: Path) -> ParsedReplay:
