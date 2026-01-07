@@ -115,7 +115,9 @@ class ReplayDB:
             )
         }
 
-        for chunk_idx, db_chunk in enumerate(batched(self.by_time, self._chunk_max_size)):
+        for chunk_idx, db_chunk in enumerate(
+            batched(self.by_time, self._chunk_max_size)
+        ):
             if chunk_idx not in affected_chunk_idxs:
                 continue
 

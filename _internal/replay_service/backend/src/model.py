@@ -25,7 +25,9 @@ class ReplayMetadata:
     map_title: str
     players: list[Player]
     marker_count: int
-    started_at: Arrow|datetime  #  construct parses as Arrow, but it's habitual to use datetime
+    started_at: (
+        Arrow | datetime
+    )  #  construct parses as Arrow, but it's habitual to use datetime
 
     @classmethod
     def from_construct(cls, cont: Container) -> Self:

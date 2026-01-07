@@ -4,8 +4,9 @@ from queue import SimpleQueue
 
 from src.db import ReplayDB
 
-REPLAY_FOLDER = Path("./replays")
-DB_PATH = Path("./db/")
+REPLAY_FOLDER = Path("../replays")
+DB_PATH = Path("../db/")
+
 
 @dataclass(frozen=True)
 class ReplayEvent:
@@ -39,4 +40,4 @@ def replay_worker(queue: SimpleQueue[ReplayEvent | CleanUpEvent]):
 #     ).start()
 
 if __name__ == "__main__":
-    db = ReplayDB(DB_PATH, REPLAY_FOLDER)
+    db = ReplayDB(DB_PATH, REPLAY_FOLDER, _chunk_at_count=3)
