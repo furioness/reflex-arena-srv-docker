@@ -4,17 +4,15 @@ from pathlib import Path
 
 import pytest
 from arrow import Arrow
-from src.model import Player, Replay, ReplayMetadata
+from src.model import Player, ReplayMetadata, ParsedReplay
 
 ASSETS_DIR = Path(__file__).parent / "assets"
 
 
 @pytest.fixture
-def single_replay(copy_replay) -> tuple[Path, Replay]:
-    replay = Replay(
-        filename="Pocket_Infinity_Vigur_Ivan_O__05Jan2026_161301_0markers.rep.zip",  # even though it's not zip
+def single_replay(copy_replay) -> tuple[Path, ParsedReplay]:
+    replay = ParsedReplay(
         finished_at=datetime(2026, 1, 5, 16, 13, 1, tzinfo=timezone.utc),
-        downloadable=True,
         metadata=ReplayMetadata(
             protocol_version=89,
             host_name="#1 Bobr Rated http://bobr.furioness.net/ - demos",
@@ -35,11 +33,9 @@ def single_replay(copy_replay) -> tuple[Path, Replay]:
 
 
 @pytest.fixture
-def single_replay_zip(copy_replay) -> tuple[Path, Replay]:
-    replay = Replay(
-        filename="Pocket_Infinity_Vigur_Ivan_O__05Jan2026_161301_0markers.rep.zip",  # even though it's not zip
+def single_replay_zip(copy_replay) -> tuple[Path, ParsedReplay]:
+    replay = ParsedReplay(
         finished_at=datetime(2026, 1, 5, 16, 13, 1, tzinfo=timezone.utc),
-        downloadable=True,
         metadata=ReplayMetadata(
             protocol_version=89,
             host_name="#1 Bobr Rated http://bobr.furioness.net/ - demos",

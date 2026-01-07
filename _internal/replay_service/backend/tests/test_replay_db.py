@@ -1,7 +1,7 @@
 import json
 
 from src.db import ReplayDB
-from src.parser import parse_and_ensure_compressed
+from src.model import Header
 
 
 def test_init_empty_db(empty_db, replay_dir):
@@ -54,8 +54,38 @@ def test_add_new_at_the_end(aerowalk_db, replay_dir, copy_replay):
     replay_filename = "Pocket_Infinity_Vigur_Ivan_O__05Jan2026_161301_0markers.rep"
     replay_copy_path = copy_replay(replay_filename)
 
-    db.add_if_missing(parse_and_ensure_compressed(replay_copy_path))
+    db.ingest_replay(replay_copy_path)
     assert len(db.by_time) == 8
+
+    header = Header.from_dict(
+        json.loads((aerowalk_db / "replays_header.json").read_text()),
+        expected_max_chunk_size=3,
+    )
+    assert header.total_count == 7
+
+    db.save_to_fs()
+    header = Header.from_dict(
+        json.loads((aerowalk_db / "replays_header.json").read_text()),
+        expected_max_chunk_size=3,
+    )
+    assert header.total_count == 8
+
+
+def test_add_new_replay_played_at_mid_date(aerowalk_db, replay_dir, copy_replay):
+    db = ReplayDB(aerowalk_db, replay_dir, _chunk_at_count=3)
+    assert len(db.by_time) == 7
+
+    replay_filename = "Simplicity_Ivan_O__Vigur_03Dec2025_194603_0markers.rep"
+    replay_copy_path = copy_replay(replay_filename)
+
+    db.ingest_replay(replay_copy_path)
+    db.save_to_fs()
+
+    header = Header.from_dict(
+        json.loads((aerowalk_db / "replays_header.json").read_text()),
+        expected_max_chunk_size=3,
+    )
+    assert header.total_count == 8
 
 
 def test_reconcile_with_new_replay_played_at_mid_date(
@@ -81,5 +111,12 @@ def test_unmark_downloadable_on_reconciliation_if_missing(
     replay_filename = "Pocket_Infinity_Vigur_Ivan_O__05Jan2026_161301_0markers.rep"
     replay_copy_path = copy_replay(replay_filename)
 
-    db.add_if_missing(parse_and_ensure_compressed(replay_copy_path))
+    db.ingest_replay(replay_copy_path)
+    db.save_to_fs()
     assert len(db.by_time) == 8
+    assert db.by_filename[replay_filename + ".zip"].downloadable
+
+    replay_copy_path.with_suffix(".rep.zip").unlink()
+    db = ReplayDB(aerowalk_db, replay_dir, _chunk_at_count=3)
+    assert len(db.by_time) == 8
+    assert not db.by_filename[replay_filename + ".zip"].downloadable

@@ -1,14 +1,20 @@
 import hashlib
 import json
+import logging
+import zipfile
 from datetime import datetime, timezone
 from itertools import batched
 from pathlib import Path
+from struct import error
 from typing import Callable
 
+from construct import ConstructError
 from sortedcontainers import SortedListWithKey
 
-from src.model import Replay, Header, ChunkHeader
-from src.parser import parse_and_ensure_compressed
+from src.model import ChunkHeader, Header, ParsedReplay, Replay, ReplayMetadata
+from src.parser import parse_finished_at, parse_raw, parse_zip_compressed
+
+logger = logging.getLogger(__name__)
 
 
 class ReplayDB:
@@ -73,7 +79,7 @@ class ReplayDB:
 
             chunk_replay_count = 0
             for filename, replay_data in chunk.items():
-                self.add_if_missing(Replay.from_jsonable(replay_data, filename))
+                self._add_if_missing(Replay.from_jsonable(replay_data, filename))
                 chunk_replay_count += 1
 
             assert chunk_replay_count == chunk_header.count
@@ -157,14 +163,30 @@ class ReplayDB:
         for tmp in self._db_path.glob("*.tmp"):
             tmp.unlink()
 
-    def add_if_missing(self, replay: Replay) -> None:
+    def ingest_replay(self, replay_path: Path) -> Replay:
+        if replay := self.by_filename.get(replay_path.name):
+            return replay
+
+        parsing_result = self._parse(replay_path)
+        compressed_path = self._ensure_compressed(replay_path)
+        replay = Replay(
+            filename=compressed_path.name,
+            downloadable=True,
+            finished_at=parsing_result.finished_at,
+            metadata=parsing_result.metadata,
+        )
+
+        return self._add_if_missing(replay)
+
+    def _add_if_missing(self, replay: Replay) -> Replay:
         if replay.filename in self.by_filename:
-            return
+            return replay
 
         self.by_filename[replay.filename] = replay
         self.by_time.add(replay)
 
         self._unsaved_added.add(replay)
+        return replay
 
     def _mark_fs_present(self, db_replay: Replay):
         if db_replay.downloadable:
@@ -192,8 +214,7 @@ class ReplayDB:
             if replay := self.by_filename.get(replay_path.name):
                 self._mark_fs_present(replay)
             else:
-                replay = parse_and_ensure_compressed(replay_path)
-                self.add_if_missing(replay)
+                replay = self.ingest_replay(replay_path)
             present_replays.add(replay)
 
         for replay in self.by_time:
@@ -201,6 +222,49 @@ class ReplayDB:
                 self._mark_fs_missing(replay)
 
         self.save_to_fs()
+
+    @classmethod
+    def _parse(cls, replay_path: Path) -> ParsedReplay:
+        try:
+            if replay_path.suffix == ".zip":
+                metadata = ReplayMetadata.from_construct(
+                    parse_zip_compressed(replay_path)
+                )
+            elif replay_path.suffix == ".rep":
+                metadata = ReplayMetadata.from_construct(parse_raw(replay_path))
+            else:
+                raise ValueError(f"Unsupported replay file type: {replay_path.suffix}")
+        except (ConstructError, error) as exc:
+            metadata = None
+            print(f"Failed to parse replay {replay_path}", exc)
+
+        return ParsedReplay(
+            finished_at=parse_finished_at(replay_path.name), metadata=metadata
+        )
+
+    @staticmethod
+    def _ensure_compressed(replay_path: Path) -> Path:
+        if replay_path.suffix == ".zip":
+            return replay_path
+
+        with zipfile.ZipFile(
+            replay_path.with_suffix(".rep.zip.tmp"), "w"
+        ) as replay_zip:
+            replay_zip.write(replay_path)
+
+        # if we crash here, we will have dangling .tmp
+        # but since the original replay is still here, it will be just rewritten
+
+        replay_path.with_suffix(".rep.zip.tmp").replace(
+            replay_path.with_suffix(".rep.zip")
+        )
+
+        # if we crash here, we will have dangling .rep,
+        # but it will be processed again and removed on next reconciliation
+
+        replay_path.unlink()
+
+        return replay_path.with_suffix(".rep.zip")
 
     @staticmethod
     def _write_atomic(path: Path, obj: str | bytes):

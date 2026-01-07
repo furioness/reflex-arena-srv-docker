@@ -1,8 +1,7 @@
 import dataclasses
 from dataclasses import dataclass
 from datetime import datetime
-from typing import ClassVar
-from typing import Self
+from typing import ClassVar, Self
 
 from arrow import Arrow
 from construct import Container
@@ -41,6 +40,12 @@ class ReplayMetadata:
             marker_count=cont.marker_count,
             started_at=cont.started_at,
         )
+
+
+@dataclass(frozen=True)
+class ParsedReplay:
+    finished_at: datetime
+    metadata: ReplayMetadata | None
 
 
 @dataclass
@@ -87,7 +92,7 @@ class Replay:
         return dct
 
 
-@dataclass
+@dataclass(frozen=True)
 class ChunkHeader:
     filename: str
     oldest_replay_ts: datetime
