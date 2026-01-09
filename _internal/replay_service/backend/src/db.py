@@ -47,12 +47,19 @@ class ReplayDB:
         if self.reconcile_on_init:
             self.reconcile()
 
-    def ingest_replay(self, filename: str) -> Replay:
+    def ingest_replay(self, filename: str) -> Replay | None:
         replay_path = self.replay_folder / filename
         if replay := self.by_filename.get(replay_path.name):
+            if not replay_path.exists():
+                self._mark_fs_missing(replay)
+            else:
+                self._mark_fs_present(replay)
             return replay
 
-        logger.info(f"Ingesting replay {replay_path.name}")
+        if not replay_path.exists():
+            return None
+
+        logger.info(f"Ingesting new replay {replay_path.name}")
 
         parsing_result = self._parse(replay_path)
         compressed_path = self._ensure_compressed(replay_path)
@@ -66,11 +73,13 @@ class ReplayDB:
         return self._add_if_missing(replay)
 
     def save_to_fs(self):
+        # TODO: add debouncing, maybe
         if not self._unsaved_added and not self._unsaved_mutated:
             return
 
         logger.info(
-            f"Saving DB to FS with {len(self._unsaved_added)} added and {len(self._unsaved_mutated)} mutated replays...")
+            f"Saving DB to FS with {len(self._unsaved_added)} added and {len(self._unsaved_mutated)} mutated replays..."
+        )
 
         header = Header.from_dict(
             json.loads(self._db_header_path.read_text()), self._chunk_max_size
@@ -156,7 +165,11 @@ class ReplayDB:
             if replay := self.by_filename.get(replay_path.name):
                 self._mark_fs_present(replay)
             else:
-                replay = self.ingest_replay(replay_path)
+                replay = self.ingest_replay(replay_path.name)
+
+            if not replay:
+                continue
+
             present_replays.add(replay)
 
         for replay in self.by_time:
@@ -225,6 +238,7 @@ class ReplayDB:
     def _mark_fs_present(self, db_replay: Replay):
         if db_replay.downloadable:
             return
+        logger.info(f"Marking replay {db_replay.filename} as available for download.")
         db_replay.downloadable = True
 
         self._unsaved_mutated.add(db_replay)
@@ -232,10 +246,12 @@ class ReplayDB:
     def _mark_fs_missing(self, db_replay: Replay):
         if not db_replay.downloadable:
             return
+        logger.info(
+            f"Marking replay {db_replay.filename} as not available for download."
+        )
         db_replay.downloadable = False
 
         self._unsaved_mutated.add(db_replay)
-
 
     @classmethod
     def _parse(cls, replay_path: Path) -> ParsedReplay:

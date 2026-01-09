@@ -45,6 +45,13 @@ def parse_finished_at(filename: str) -> datetime:
     return datetime.strptime(datetime_, "%d%b%Y_%H%M%S").replace(tzinfo=timezone.utc)
 
 
+def parse_finished_at_with_fallback(filename: str, fallback: datetime) -> datetime:
+    try:
+        return parse_finished_at(filename)
+    except ValueError:
+        return fallback
+
+
 def parse_raw(replay: Path) -> Container:
     with open(replay, "rb") as f:
         return ReplayHeaderStruct.parse(f.read())
