@@ -2,7 +2,7 @@ x-reflexded-base: &reflexded-base
   image: reflexded:latest  # see service reflexded_installer build
   tty: true
   init: true
-  restart: always
+  restart: unless-stopped
   depends_on:
     reflexded_installer:
       condition: service_completed_successfully
@@ -55,7 +55,7 @@ services:
     init: true
     volumes:
       - './reflexded/:/srv/steam/reflexded'
-    restart: 'no' # This service should not restart once completed.
+    restart: on-failure:3 # This service should not restart once completed.
 
   nginx:
     image: nginx:latest
@@ -81,7 +81,7 @@ services:
     volumes:
       - './reflexded/:/srv/steam/reflexded'
       - './rulesets_local/:/rulesets_local/:ro'
-    restart: always
+    restart: unless-stopped
     logging:
       driver: 'local'
       options:
@@ -95,7 +95,7 @@ services:
     init: true
     volumes:
       - './reflexded/replays/:/replays/'
-    restart: always
+    restart: unless-stopped
     logging:
       driver: 'local'
       options:
