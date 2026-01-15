@@ -2,6 +2,8 @@ import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
+# Original parser by https://github.com/Donaldduck8/reflex-replay-tools
+
 from construct import (
     BytesInteger,
     Container,

@@ -3,10 +3,15 @@ FROM python:3.14-slim-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 RUN apt-get update \
- && apt-get install -y zip \
- && rm -rf /var/lib/apt/lists/*
+ && apt-get upgrade -y
 
-COPY backend/ /replay_service/
+WORKDIR /replay_service/
 
-ENTRYPOINT ["/replay_service/main.py"]
+COPY backend/ ./
+
+RUN uv sync
+
+ENTRYPOINT ["uv", "run", "python", "-m", "src.main"]

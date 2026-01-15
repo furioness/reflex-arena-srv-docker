@@ -72,7 +72,7 @@ services:
         max-file: '3'
     cpus: 0.1
 
-  rulesets_updater:
+  ruleset_service:
     build: 
       context: _internal/ruleset_service/
     init: true
@@ -89,10 +89,17 @@ services:
         max-file: '3'
     cpus: 0.1
 
-  replays_cleaner:
+  replay_service:
     build: 
       context: _internal/replay_service/
     init: true
+    environment:
+      REPLAY_FOLDER: '/replays/'
+      DB_PATH: '/replay_db/'
+      MIN_FREE_SPACE_RATIO: 0.25
+      MIN_REPLAY_RETENTION_MiB: 3500
+      MIN_EXPECTED_DISK_GiB: 10
+      CLEAN_INTERVAL_SECONDS: 1800
     volumes:
       - './reflexded/replays/:/replays/'
     restart: unless-stopped

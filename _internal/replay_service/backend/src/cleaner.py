@@ -31,25 +31,26 @@ class Cleaner:
     def __init__(self, config: CleanerConfig):
         self.config = config
 
-    def _get_disk_usage_safe(self):
-        total, used, free = shutil.disk_usage(self.config.replay_folder)
+    def _get_disk_usage_safe(self) -> shutil._ntuple_diskusage | None:
+        usage = shutil.disk_usage(self.config.replay_folder)
 
-        if total <= 0:
+        # Sanity checks. ZFS or other things may break this
+        if usage.total <= 0:
             logger.warning("Disk usage reports total<=0")
             return None
 
-        if free < 0 or free > total:
+        if usage.free < 0 or usage.free > usage.total:
             logger.warning("Disk usage reports invalid free space")
             return None
 
-        if total < self.config.min_expected_disk_size_bytes:
+        if usage.total < self.config.min_expected_disk_size_bytes:
             logger.warning(
                 "Disk total size (%d) below expected minimum",
-                total,
+                usage.total,
             )
             return None
 
-        return total, used, free
+        return usage
 
     def _calculate_space_size_to_clean_up(self) -> int:
         usage = self._get_disk_usage_safe()
@@ -57,17 +58,15 @@ class Cleaner:
             logger.warning("Unable to determine disk usage!")
             return 0
 
-        total, _, free = usage
-
         logger.info(
-            "Disk free: %.1f%% (%d MiB free)",
-            free / total * 100,
-            free // MiB,
+            "Disk free: %.1f%% (%d MiB)",
+            usage.free / usage.total * 100,
+            usage.free // MiB,
         )
 
-        current_ratio = free / total
+        current_ratio = usage.free / usage.total
         overusage_ratio = self.config.min_free_space_ratio - current_ratio
-        need_to_clean_bytes = int(overusage_ratio * total)
+        need_to_clean_bytes = int(overusage_ratio * usage.total)
         return need_to_clean_bytes if overusage_ratio > 0 else 0
 
     def clean_up_once(self):
@@ -82,8 +81,8 @@ class Cleaner:
                 for path in self.config.replay_folder.glob("*.rep.zip")
                 if path.is_file()
             ),
-            key=lambda x: parse_finished_at_with_fallback(
-                x[0].name, datetime.max.replace(tzinfo=timezone.utc)
+            key=lambda replay: parse_finished_at_with_fallback(
+                replay[0].name, datetime.max.replace(tzinfo=timezone.utc)
             ),
         )
         total_replay_bytes = sum(size for _, size in replays)

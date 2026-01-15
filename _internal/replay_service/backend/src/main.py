@@ -1,12 +1,13 @@
 import logging
 import threading
 from dataclasses import dataclass
+from os import environ
 from pathlib import Path
 from queue import SimpleQueue
 
 from inotify_simple import INotify, flags
 
-from src.cleaner import Cleaner, CleanerConfig, MiB, GiB
+from src.cleaner import Cleaner, CleanerConfig, GiB, MiB
 from src.db import ReplayDB
 
 logging.basicConfig(
@@ -16,13 +17,12 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-# TODO: consume cfg from the env
-REPLAY_FOLDER = Path("../replays")
-DB_PATH = Path("../db/")
-MIN_FREE_SPACE_RATIO = 0.2
-MIN_REPLAY_RETENTION_MiB = 5_000  # 5000 MB
-MIN_EXPECTED_DISK_GiB = 10  # 10 GB
-CLEAN_INTERVAL_SECONDS = 60 * 60
+REPLAY_FOLDER = Path(environ["REPLAY_FOLDER"])
+DB_PATH = Path(environ["DB_PATH"])
+MIN_FREE_SPACE_RATIO = float(environ["MIN_FREE_SPACE_RATIO"])
+MIN_REPLAY_RETENTION_MiB = int(environ["MIN_REPLAY_RETENTION_MiB"])
+MIN_EXPECTED_DISK_GiB = int(environ["MIN_EXPECTED_DISK_GiB"])
+CLEAN_INTERVAL_SECONDS = int(environ["CLEAN_INTERVAL_SECONDS"])
 
 
 @dataclass(frozen=True)
@@ -49,7 +49,7 @@ def inotify_producer(queue: SimpleQueue, db_ready: threading.Event):
     db_ready.wait()
 
     while True:
-        for event in inotify.read():
+        for event in inotify.read(read_delay=10_000):
             name = event.name
             mask = flags.from_mask(event.mask)
 
