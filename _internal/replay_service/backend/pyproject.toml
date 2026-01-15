@@ -3,7 +3,7 @@ name = "replay-service"
 version = "0.1.0"
 description = "Reflex Arena replay service: parsing to json, compressing, deleting old."
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 dependencies = [
     "arrow>=1.4.0",
     "construct>=2.10.70",
