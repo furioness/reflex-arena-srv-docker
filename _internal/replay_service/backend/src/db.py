@@ -119,6 +119,8 @@ class ReplayDB:
             chunk_json = {replay.filename: replay.to_jsonable() for replay in db_chunk}
             chunk_json = json.dumps(chunk_json).encode()
 
+            # TODO: there is no need for hashing! Just use incremental numbers,
+            #  and store it in the header. Or just plain timestamp
             chunk_hash = hashlib.blake2s(
                 chunk_json, digest_size=6, usedforsecurity=False
             ).hexdigest()

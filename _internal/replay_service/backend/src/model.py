@@ -12,7 +12,13 @@ class Player:
     name: str
     score: int
     team: int
-    steam_id: int
+    steam_id: str  # it's a large integer, frontend JS would need a special treatment
+
+    @classmethod
+    def from_construct(cls, cont: Container) -> Self:
+        return cls(
+            name=cont.name, score=cont.score, team=cont.team, steam_id=str(cont.steam_id)
+        )
 
 
 @dataclass(frozen=True)
@@ -20,7 +26,7 @@ class ReplayMetadata:
     protocol_version: int
     host_name: str
     game_mode: str
-    map_steam_id: int
+    map_steam_id: str  # it's a large integer, frontend JS would need a special treatment
     map_title: str
     players: list[Player]
     marker_count: int
@@ -34,9 +40,9 @@ class ReplayMetadata:
             protocol_version=cont.protocol_version,
             host_name=cont.host_name,
             game_mode=cont.game_mode,
-            map_steam_id=cont.map_steam_id,
+            map_steam_id=str(cont.map_steam_id),
             map_title=cont.map_title,
-            players=[Player(**player) for player in cont.players],
+            players=[Player.from_construct(player) for player in cont.players],
             marker_count=cont.marker_count,
             started_at=cont.started_at,
         )
