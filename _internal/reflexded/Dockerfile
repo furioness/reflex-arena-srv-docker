@@ -1,28 +1,21 @@
-FROM debian:12
+FROM debian:13-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN dpkg --add-architecture i386 \
  && apt-get update \
- && apt-get install -y gpg htop nano wget ca-certificates libc6:i386 \
- && mkdir -pm755 /etc/apt/keyrings  \
- && wget -O - https://dl.winehq.org/wine-builds/winehq.key | gpg --dearmor -o /etc/apt/keyrings/winehq-archive.key - \
- && wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/debian/dists/bookworm/winehq-bookworm.sources \
- && apt-get update -o Dir::Etc::sourcelist="sources.list.d/winehq-bookworm.sources" \
-                   -o Dir::Etc::sourceparts="-" \
-                   -o APT::Get::List-Cleanup="0" \
- && apt-get install --no-install-recommends -y winehq-stable \
+ && apt-get install -y ca-certificates libc6:i386 libcurl4t64 wget --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 
-# Pre-create a 32-bit prefix
-RUN WINEARCH=win32 wineboot --init \
- && wineserver -w
 
 
-# RUN useradd steam -m -r -s /bin/bash
-# USER steam
+RUN mkdir -p /srv/steam/
+WORKDIR /srv/steam/
 
-COPY reflexded_fixed.exe /
+RUN wget https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz \
+    && tar -xf steamcmd_linux.tar.gz \
+    && rm steamcmd_linux.tar.gz
+
 COPY --chmod=+x runserver.sh /
 COPY --chmod=+x install_reflexded.sh /
 
