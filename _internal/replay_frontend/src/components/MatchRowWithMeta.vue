@@ -1,7 +1,6 @@
 <script lang="ts" setup>
-
 import {formatDate, getReplayUrl} from '@/utils/utils.ts'
-import type {Match, Player, ReplayMeta} from "@/types/db-json";
+import type {Match, Player, ReplayMeta} from '@/types/db-json'
 
 defineProps<{
   match: Match & { metadata: ReplayMeta }

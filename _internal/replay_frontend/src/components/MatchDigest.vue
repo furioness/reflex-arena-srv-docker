@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import MatchRowWithMeta from '@/components/MatchRowWithMeta.vue'
 import MatchRowNoMeta from '@/components/MatchRowNoMeta.vue'
-import type {Match} from "@/types/db-json";
+import type {Match} from '@/types/db-json'
 
 const {match, filename} = defineProps<{
   match: Match

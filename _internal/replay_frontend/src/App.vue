@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {onMounted, ref} from 'vue'
 import MatchList from '@/components/MatchList.vue'
-import type {ChunkHeader, DBHeader, Matches} from "@/types/db-json";
+import type {ChunkHeader, DBHeader, Matches} from '@/types/db-json'
 
 const DB_ROOT = '/db'
 const REPLAYS_ROOT = '/replays'
@@ -29,7 +29,7 @@ async function loadChunk(chunk: ChunkHeader) {
     throw new Error(`Failed fetching Replay Header DB, status: ${response.status}`)
   }
 
-  const result = await response.json() as Matches
+  const result = (await response.json()) as Matches
   for (const match of Object.values(result)) {
     match.finished_at = new Date(match.finished_at)
     if (match.metadata) {
