@@ -1,13 +1,15 @@
 <script lang="ts" setup>
 import MatchDigest from '@/components/MatchDigest.vue'
 import {computed, type ComputedRef} from 'vue'
-import type {Matches} from "@/types/db-json";
+import type {Match, Matches} from '@/types/db-json'
 
 const props = defineProps<{ matches: Matches }>()
 
-const reversedMatches: ComputedRef<Matches> = computed(() =>
-  Object.fromEntries(Object.entries(props.matches).reverse()),
-)
+const orderedMatches: ComputedRef<Array<[string, Match]>> = computed(() => {
+  return Object.entries(props.matches).sort(
+    ([, a], [, b]) => b.finished_at.getTime() - a.finished_at.getTime(),
+  )
+})
 </script>
 
 <template>
@@ -20,10 +22,10 @@ const reversedMatches: ComputedRef<Matches> = computed(() =>
     <div class="cell players">Players</div>
   </div>
   <MatchDigest
-    v-for="(replay, filename) in reversedMatches"
+    v-for="[filename, match] in orderedMatches"
     :key="filename"
     :filename="filename"
-    :match="replay"
+    :match="match"
   />
 </template>
 
