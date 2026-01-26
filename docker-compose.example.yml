@@ -63,7 +63,9 @@ services:
       - "80:80"
     volumes:
       - './_internal/nginx/nginx.conf:/etc/nginx/nginx.conf:ro'
-      - './reflexded/replays/:/usr/share/nginx/html/:ro'
+      - './_internal/replay_frontend/dist/:/www/app/:ro'
+      - './db:/www/db/:ro'
+      - './reflexded/replays/:/www/replays/:ro'
     restart: always
     logging:
       driver: 'local'
@@ -99,9 +101,9 @@ services:
       MIN_FREE_SPACE_RATIO: 0.25
       MIN_REPLAY_RETENTION_MiB: 3500
       MIN_EXPECTED_DISK_GiB: 10
-      CLEAN_INTERVAL_SECONDS: 1800
     volumes:
       - './reflexded/replays/:/replays/'
+      - './db:/replay_db/'
     restart: unless-stopped
     logging:
       driver: 'local'

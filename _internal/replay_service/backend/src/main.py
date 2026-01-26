@@ -22,7 +22,7 @@ DB_PATH = Path(environ["DB_PATH"])
 MIN_FREE_SPACE_RATIO = float(environ["MIN_FREE_SPACE_RATIO"])
 MIN_REPLAY_RETENTION_MiB = int(environ["MIN_REPLAY_RETENTION_MiB"])
 MIN_EXPECTED_DISK_GiB = int(environ["MIN_EXPECTED_DISK_GiB"])
-CLEAN_INTERVAL_SECONDS = int(environ["CLEAN_INTERVAL_SECONDS"])
+CLEAN_INTERVAL_SECONDS = 1800  # there is no reason to put it in envs
 
 
 @dataclass(frozen=True)

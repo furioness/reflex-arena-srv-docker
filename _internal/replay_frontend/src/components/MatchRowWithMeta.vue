@@ -1,8 +1,9 @@
 <script lang="ts" setup>
-import {computed} from "vue";
-import {formatDate} from "@/utils/utils.ts";
 
-const props = defineProps<{
+import {formatDate, getReplayUrl} from '@/utils/utils.ts'
+import type {Match, Player, ReplayMeta} from "@/types/db-json";
+
+defineProps<{
   match: Match & { metadata: ReplayMeta }
   filename: string
 }>()
@@ -14,9 +15,7 @@ function getPlayerSteamProfileLink(player: Player): string {
 function getMapWorkshopLink(replayMeta: ReplayMeta): string {
   return `https://steamcommunity.com/sharedfiles/filedetails/?id=${replayMeta.map_steam_id}`
 }
-
 </script>
-
 
 <template>
   <div class="match-row">
@@ -29,31 +28,20 @@ function getMapWorkshopLink(replayMeta: ReplayMeta): string {
     </div>
 
     <div class="cell download">
-      <a v-if="match.downloadable" :href="filename">Download</a>
+      <a v-if="match.downloadable" :href="getReplayUrl(filename)">Download</a>
       <span v-else class="disabled">—</span>
     </div>
 
     <div :title="match.metadata.map_title" class="cell map">
-      <a
-        :href="getMapWorkshopLink(match.metadata)"
-        target="_blank"
-      >
+      <a :href="getMapWorkshopLink(match.metadata)" target="_blank">
         {{ match.metadata.map_title }}
       </a>
     </div>
 
     <div class="cell players">
       <div class="players-scroll">
-        <div
-          v-for="player in match.metadata.players"
-          :key="player.steam_id"
-          class="player"
-        >
-          <a
-            :href="getPlayerSteamProfileLink(player)"
-            class="player-name"
-            target="_blank"
-          >
+        <div v-for="player in match.metadata.players" :key="player.steam_id" class="player">
+          <a :href="getPlayerSteamProfileLink(player)" class="player-name" target="_blank">
             {{ player.name }}
           </a>
           <span class="score">{{ player.score }}</span>

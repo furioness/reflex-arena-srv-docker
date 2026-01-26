@@ -1,9 +1,13 @@
 <script lang="ts" setup>
+import MatchDigest from '@/components/MatchDigest.vue'
+import {computed, type ComputedRef} from 'vue'
+import type {Matches} from "@/types/db-json";
 
-import MatchDigest from "@/components/MatchDigest.vue";
+const props = defineProps<{ matches: Matches }>()
 
-defineProps<{ matches: Matches }>();
-
+const reversedMatches: ComputedRef<Matches> = computed(() =>
+  Object.fromEntries(Object.entries(props.matches).reverse()),
+)
 </script>
 
 <template>
@@ -15,8 +19,12 @@ defineProps<{ matches: Matches }>();
     <div class="cell map">Map</div>
     <div class="cell players">Players</div>
   </div>
-  <MatchDigest v-for="(replay, filename) in matches"
-               :key="filename" :filename="filename" :match="replay"/>
+  <MatchDigest
+    v-for="(replay, filename) in reversedMatches"
+    :key="filename"
+    :filename="filename"
+    :match="replay"
+  />
 </template>
 
 <style scoped>
