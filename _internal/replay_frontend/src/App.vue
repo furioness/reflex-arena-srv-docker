@@ -45,7 +45,9 @@ const header = ref<DBHeader | null>(null)
 onMounted(async () => {
   header.value = await loadDBHeader()
 
-  for (const chunkHeader of header.value.chunk_headers) {
+  // reversing, so we can start with the latest matches
+  // which will render immediately, as the final list is reactive
+  for (const chunkHeader of header.value.chunk_headers.slice().reverse()) {
     const matchesChunk = await loadChunk(chunkHeader)
 
     Object.assign(matches.value, matchesChunk)
