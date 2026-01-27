@@ -18,6 +18,7 @@ const orderedMatches: ComputedRef<Array<[string, Match]>> = computed(() => {
     <div class="cell date">Date</div>
     <div class="cell mode">Mode</div>
     <div class="cell download">Download</div>
+    <div class="cell marker-count">Marker<br/>count</div>
     <div class="cell map">Map</div>
     <div class="cell players">Players</div>
   </div>
@@ -36,6 +37,7 @@ const orderedMatches: ComputedRef<Array<[string, Match]>> = computed(() => {
     [date] 20ch
     [mode] 7ch
     [download] 15ch
+    [marker_count] 7ch
     [map] minmax(12ch, 1fr)
     [players] minmax(0, 3fr);
 

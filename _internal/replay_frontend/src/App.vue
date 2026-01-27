@@ -52,7 +52,7 @@ onMounted(async () => {
 
     Object.assign(matches.value, matchesChunk)
   }
-  console.debug(`Loaded ${Object.keys(matches).length} matches`)
+  console.debug(`Loaded ${Object.keys(matches.value).length} matches`)
 })
 </script>
 

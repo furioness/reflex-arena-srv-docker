@@ -31,6 +31,10 @@ function getMapWorkshopLink(replayMeta: ReplayMeta): string {
       <span v-else class="disabled">—</span>
     </div>
 
+    <div :class="{ highlighted: match.metadata.marker_count > 0 }" class="cell marker-count">
+      {{ match.metadata.marker_count }}
+    </div>
+
     <div :title="match.metadata.map_title" class="cell map">
       <a :href="getMapWorkshopLink(match.metadata)" target="_blank">
         {{ match.metadata.map_title }}
@@ -62,9 +66,16 @@ function getMapWorkshopLink(replayMeta: ReplayMeta): string {
 }
 
 .player {
-  display: flex;
-  gap: 0.25rem;
-  min-width: max-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+
+  padding: 0.1rem 0.4rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+
+  font-size: 0.85em;
+  background: #fafafa;
 }
 
 .player-name {
@@ -75,5 +86,10 @@ function getMapWorkshopLink(replayMeta: ReplayMeta): string {
 
 .disabled {
   color: #aaa;
+}
+
+.marker-count.highlighted {
+  font-weight: 600;
+  color: #333;
 }
 </style>
