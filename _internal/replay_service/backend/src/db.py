@@ -257,6 +257,7 @@ class ReplayDB:
 
     @classmethod
     def _parse(cls, replay_path: Path) -> ParsedReplay:
+        # TODO: replay count can be parsed from replay header
         try:
             if replay_path.suffix == ".zip":
                 metadata = ReplayMetadata.from_construct(
