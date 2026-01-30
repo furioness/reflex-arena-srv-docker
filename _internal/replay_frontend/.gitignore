@@ -1,3 +1,5 @@
+/public/db/
+
 # Logs
 logs
 *.log
@@ -34,3 +36,4 @@ coverage
 
 # Vitest
 __screenshots__/
+
