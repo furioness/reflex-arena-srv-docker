@@ -1,4 +1,4 @@
-# Reflex Arena Dedicated server quick deployment
+# Reflex Arena Dedicated server quick deployment (v. 2.0.0)
 
 A simpler way to host dedicated Reflex Arena servers with the following features:
 - quick deployment and auto start on system reboot, thanks to Docker Compose
@@ -156,6 +156,9 @@ The easiest way is to start afresh (as in the how-to section), then move all the
 
 I'll try to make it possible for the future updates to work as simple `git pull` + comparison of docker-compose with a
 clear list of changes.
+
+I'll follow SemVer, so if the major version doesn't change, simple `git pull` (and perhaps service restart) should do
+the thing.
 
 ## Possible future improvements
 - sanitized rulesets: there is a possibility that things like `sv_refpassword` can be included in it - need to sanitize
