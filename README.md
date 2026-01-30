@@ -170,3 +170,4 @@ the thing.
 - adding donation links!
 - the current replay frontend is ugly and has no filtering, there are some `ideas.md`/`TODO.md` files in the repo, so I
   won't cover details here
+- updating reflexded automatically (for now keeping things manual so nothing silently breaks + it can be complicated)
