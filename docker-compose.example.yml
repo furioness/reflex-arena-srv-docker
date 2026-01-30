@@ -35,7 +35,10 @@ services:
       - '25787:25787/udp'
     environment:
       <<: *dedicatedserver-cfg-env
-      SRV_ARGS: '+sv_hostname #1 Bobr Rated http://bobr.furioness.net/ - demos +sv_gameport 25787'
+      SRV_ARGS: >
+        "+sv_hostname #1 Bobr Rated http://bobr.furioness.net/ - demos"
+        +sv_maxclients 9
+        +sv_gameport 25787
 
   ded2:
     <<: *reflexded-base
