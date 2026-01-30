@@ -38,7 +38,7 @@ const orderedMatches: ComputedRef<Array<[string, Match]>> = computed(() => {
     [mode] 7ch
     [download] 15ch
     [marker_count] 7ch
-    [map] minmax(12ch, 1fr)
+    [map] 20ch
     [players] minmax(0, 3fr);
 
   align-items: center;
