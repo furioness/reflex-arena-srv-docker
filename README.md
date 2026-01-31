@@ -43,9 +43,33 @@ specific delimiter.
 Copy `dedX` section, increment X by 1, increment the ports - both in service definition and in `SRV_ARGS` in
 `+sv_gameport`, and add any additional settings. Those will override the common ones.
 
-If you want to include `#` or other questionable symbols, double quote the whole line, or concatenate all the parameters
-into a one single quoted line.
-Just check ded1 and ded2 for examples.
+#### `SRV_ARGS_*` with special characters (`#`, quotes, spaces)
+
+There are **two supported ways** to write server arguments. Pick any.
+
+1) Put everything on one line and wrap it in single quotes:
+
+```yaml
+SRV_ARGS: '+sv_hostname #1 Bobr Rated EU +sv_gameport 25787'
+```
+
+2) Use YAML multiline string syntax:
+
+```yaml
+SRV_ARGS: >
+  +sv_hostname #1 Bobr [Replays]
+  +sv_gameport 25787
+```
+
+Beware! In the multiline form, `#` (and everything else) is treated as a normal character, not a comment.
+
+If in doubt, check how reflexded uses it by running:
+
+```bash
+docker compose logs ded1 | grep 'applying command line paramaters:' -A 20
+```
+
+---
 
 Remember to check the firewall for the ports!
 

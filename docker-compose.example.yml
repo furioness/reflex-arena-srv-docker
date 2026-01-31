@@ -24,8 +24,6 @@ x-dedicatedserver-cfg-env: &dedicatedserver-cfg-env
     +sv_startwmap 608417285
     +sv_startruleset cr2
     +sv_startmode 1v1
-    # +sv_refpassword yourrefpassword
-    # +rcon_password yourrconpassword
 
 services:
   ded1:
@@ -36,7 +34,7 @@ services:
     environment:
       <<: *dedicatedserver-cfg-env
       SRV_ARGS: >
-        "+sv_hostname #1 Bobr Rated http://bobr.furioness.net/ - demos"
+        +sv_hostname #1 Bobr Rated http://bobr.furioness.net/ - demos
         +sv_maxclients 9
         +sv_gameport 25787
 
