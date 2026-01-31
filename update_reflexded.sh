@@ -8,5 +8,6 @@ sudo rm -f reflexded/steamapps/appmanifest_329740.acf
 
 sudo rm -f reflexded/INSTALL_FINISHED_SENTINEL
 docker compose stop
-docker compose up reflexded_installer  # so we can see the logs
-docker compose up -d
+docker compose build  # let's refresh the containers too, for security updates
+docker compose up --force-recreate reflexded_installer  # running in the foreground for logs
+docker compose up -d --force-recreate --remove-orphans
