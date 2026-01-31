@@ -25,31 +25,15 @@ install_stable() {
 EOF
 }
 
-install_beta() {
-  ./steamcmd.sh <<EOF
-    @ShutdownOnFailedCommand 1
-    @sSteamCmdForcePlatformType linux
-    @NoPromptForPassword 1
-    force_install_dir $INSTALL_DIR
-    login anonymous
-    app_update 329740 -beta beta -betapassword betabetabeta validate
-    quit
-EOF
-}
-
 is_installed() {
   # steamcmd can fail with exit code 0,
   # so better to check whether reflexded is a non-empty file
+  # but this isn't a guarantee anyway, so keep checking the logs!
   [[ -s "$INSTALL_DIR/reflexded" ]]
 }
 
 echo "Attempting stable install…"
-install_stable || true
-
-if ! is_installed; then
-  echo "Stable not usable, attempting beta…"
-  install_beta
-fi
+install_stable
 
 is_installed || {
   echo "ERROR: reflexded installation failed"
