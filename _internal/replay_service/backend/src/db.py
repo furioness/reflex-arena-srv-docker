@@ -281,7 +281,8 @@ class ReplayDB:
             return replay_path
 
         with zipfile.ZipFile(
-            replay_path.with_suffix(".rep.zip.tmp"), "w"
+                replay_path.with_suffix(".rep.zip.tmp"), "w",
+                compression=zipfile.ZIP_DEFLATED,
         ) as replay_zip:
             replay_zip.write(replay_path)
 
