@@ -1,4 +1,4 @@
-# Reflex Arena Dedicated server quick deployment (v. 2.0.0)
+# Reflex Arena Dedicated server quick deployment (version 2)
 
 A simpler way to host dedicated Reflex Arena servers with the following features:
 - quick deployment and auto start on system reboot, thanks to Docker Compose
