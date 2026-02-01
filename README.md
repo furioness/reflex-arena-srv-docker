@@ -181,7 +181,10 @@ The easiest way is to start afresh (as in the how-to section), then move all the
 I'll try to make it possible for the future updates to work as simple `git pull` + comparison of docker-compose with a
 clear list of changes.
 
-I'll follow SemVer, so if the major version doesn't change, simple `git pull` (and perhaps service restart) should do
+#### Versioning
+
+I'll ~~follow SemVer~~ increment versions on breaking changes, so if the version doesn't change, simple `git pull` (and
+perhaps service restart) should do
 the thing.
 
 ## Possible future improvements
