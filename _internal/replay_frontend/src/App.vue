@@ -60,6 +60,7 @@ onMounted(async () => {
   <header>
     <h1>Reflex Arena matches</h1>
     <a :href="REPLAYS_ROOT + '/'">Raw list</a>
+    <a href="https://github.com/furioness/reflex-arena-srv-docker">GitHub</a>
   </header>
 
   <MatchList :matches="matches"/>
