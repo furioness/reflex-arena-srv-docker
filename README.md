@@ -19,6 +19,7 @@ A simpler way to host dedicated Reflex Arena servers with the following features
   - 80 for the replays web page
 - run docker `compose up -d`
 - run `docker compose logs -f`, if after a few minutes or so you don't see any errors, go check the servers!
+- add health checks (see the section below)
 
 If you find this all too complicated, check the original
 guide: https://github.com/m3fh4q/ReflexArenaDedicatedServerGuideLinux
@@ -75,6 +76,14 @@ Remember to check the firewall for the ports!
 
 Then run `docker compose up -d --remove-orphans` (remove orphans is useful in case you reduce the number of instances)
 and see if things working.
+
+### Health checks
+There are many free health check services, like https://cronitor.io (not affiliated, you can use any other thing).
+The main feature requirement is using Telegram (or any other messenger) notifications, so you can respond timely.
+- First, add an alert channel for a messenger.
+- Add http://your_host HTTP check for code 200 (the replays web page)
+- Add `https://reflex.syncore.org/api/serverIDs?hosts=your_host` HTTP check, and add an assert that `response.json` key `serverCount` is `>` `1` (you can use specific count, but this adds flexibility)
+- Stop your server to see if the healthchecks are actually working.
 
 ### About VPS and performance requirements
 
