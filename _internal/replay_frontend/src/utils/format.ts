@@ -1,3 +1,5 @@
+import {REPLAYS_ROOT} from "../consts";
+
 export function formatDate(date: Date): string {
   let formatter
   if (date.getFullYear() == new Date().getFullYear()) {
@@ -20,5 +22,13 @@ export function formatDate(date: Date): string {
 }
 
 export function getReplayUrl(filename: string): string {
-  return `/replays/${filename}`
+  return `/${REPLAYS_ROOT}/${filename}`
+}
+
+export function getPlayerSteamProfileUrl(playerSteamId: string): string {
+  return `https://steamcommunity.com/profiles/${playerSteamId}`
+}
+
+export function getMapWorkshopUrl(mapSteamId: string): string {
+  return `https://steamcommunity.com/sharedfiles/filedetails/?id=${mapSteamId}`
 }
