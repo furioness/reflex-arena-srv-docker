@@ -9,7 +9,7 @@
     "typescript": "^5.9.3"
   },
   "scripts": {
-    "build": "esbuild src/main.tsx --bundle --format=esm --jsx=automatic --jsx-import-source=@/jsx-runtime --alias:@=./src --outfile=dist/assets/index.js"
+    "build": "esbuild src/main.tsx --bundle --minify --format=esm --jsx=automatic --jsx-import-source=@/jsx-runtime --alias:@=./src --outfile=dist/assets/index.js"
   },
   "keywords": [],
   "author": "",
