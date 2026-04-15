@@ -22,7 +22,7 @@ x-dedicatedserver-cfg-env: &dedicatedserver-cfg-env
     +sv_country PL
     +sv_startmap Fusion
     +sv_startwmap 608417285
-    +sv_startruleset cr2
+    +sv_startruleset competitive
     +sv_startmode 1v1
 
 services:
