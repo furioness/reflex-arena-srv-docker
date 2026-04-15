@@ -5,7 +5,7 @@ A simpler way to host dedicated Reflex Arena servers with the following features
 - replays sharing with rate limits
 - automatic replays compression
 - automatic replays clean up on low disk space
-- automatic synchronization with custom rulesets repo
+- automatic synchronization with a custom rulesets repo
 - fully static web page with matches history and replays download
 - a single config for everything
 
@@ -36,7 +36,7 @@ x-dedicatedserver-cfg-env: &dedicatedserver-cfg-env
     ...
 ```
 
-settings under this header will be applied to all instances. Make sure to start each command with `+` - a reflexded
+Settings under this header will be applied to all instances. Make sure to start each command with `+` - a reflexded
 specific delimiter.
 
 ### Specific server instance settings
@@ -75,15 +75,15 @@ docker compose logs ded1 | grep 'applying command line paramaters:' -A 20
 Remember to check the firewall for the ports!
 
 Then run `docker compose up -d --remove-orphans` (remove orphans is useful in case you reduce the number of instances)
-and see if things working.
+and see if things are working.
 
 ### Health checks
 There are many free health check services, like https://cronitor.io (not affiliated, you can use any other thing).
 The main feature requirement is using Telegram (or any other messenger) notifications, so you can respond timely.
 - First, add an alert channel for a messenger.
 - Add http://your_host HTTP check for code 200 (the replays web page)
-- Add `https://reflex.syncore.org/api/serverIDs?hosts=your_host` HTTP check, and add an assert that `response.json` key `serverCount` is `>` `1` (you can use specific count, but this adds flexibility)
-- Stop your server to see if the healthchecks are actually working.
+- Add `https://reflex.syncore.org/api/serverIDs?hosts=your_host` HTTP check, and add an assert that `response.json` key `serverCount` is `>` `1` (you can use a specific count, but this adds flexibility)
+- Stop your server to see if the health checks are actually working.
 
 ### About VPS and performance requirements
 
@@ -96,10 +96,10 @@ If there is such an option, prefer high CPU frequency servers.
 Also, monitor CPU and RAM usage - make sure there are plenty of free resources. And add 1-3GB of swap, to be sure.
 I have my speculations on the topic in the MISC section below.
 
-For duels, a compressed replay usually takes around 3 MB, so for 10GB you will get around 3000 replays - sounds like
+For duels, a compressed replay usually takes around 3 MB, so for 10GB, you will get around 3000 replays - sounds like
 plenty.
 
-Please, don't be too cheap! Better not to host at all than using laggy web-tier VPS - this game kills mentally hard
+Please, don't be too cheap! Better not to host at all than to use a laggy web-tier VPS - this game is mentally hard
 enough already without ping spikes and lags.
 
 ## Components details
@@ -111,20 +111,20 @@ If you just want to host and everything seems to work just fine, you probably ca
 This simplifies initial installation and auto-start on system reboot, plus gives some level of isolation that keeps the
 system clean.
 
-Security-wise this is also a better thing, but as docker runs under `root`, this raises valid concerns, though I don't
+Security-wise, this is also a better thing, but as Docker runs under `root`, this raises valid concerns, though I don't
 expect anythign serious.
 
-Also, it allows for better performance limiting. In the future `tq` could be applied to docker networks to limit web
+Also, it allows for better performance limiting. In the future, `tc` could be applied to Docker networks to limit web
 part and give high priority for reflexded trafic (perhaps just the UDP side).
 
-In the future it would be possible to ship just a single docker-compose.yml for deployment.
+In the future, it would be possible to ship just a single docker-compose.yml for deployment.
 
 ### Reflexded installer/updater
 
 Runs once per `docker compose up`. If there is `reflexded/INSTALL_FINISHED_SENTINEL` - does nothing. Otherwise, runs
 steamcmd installation script.
 
-Currently, it attempts to run a public build (for linux, so it's 1.3 at minimum), on failure it tries `beta` version.
+Currently, it attempts to run a public build (for Linux, so it's 1.3 at minimum), on failure, it tries `beta` version.
 
 There is a handy `update_reflexded.sh` script that uses the same thing for updating the server.
 
@@ -132,20 +132,19 @@ There is a handy `update_reflexded.sh` script that uses the same thing for updat
 
 It keeps rulesets in sync with https://github.com/Nailok/reflex_rulesets.git (you can change for your own in docker
 compose `RULESETS_GIT_REPO`). Also, you can put your own rulesets in `rulesets_local` folder (those will apply
-automatically), but rulesets with the git will take precendence, so if you `callvote ruleset cr2`, you know that you
+automatically), but rulesets with the git will take precedence, so if you `callvote ruleset cr2`, you know that you
 play the latest version, not some local mutation.
 
 ### Replays services
 
-This build contains facilities for compressing, cleaning, and sharing replays via a static web page - in a low-resource
-usage manner.
+This build contains facilities for compressing, cleaning, and sharing replays via a static web page - in a resource-efficient manner.
 
 #### Backend
 
-`replay_service` from docker compose is responsible for compressing, cleaning up, and parsing replays metadate.
+`replay_service` from the docker-compose file is responsible for compressing, cleaning up, and parsing replay metadata.
 
 Compression is automatic and uses a common .zip format.
-Cleanup is done once per hour, you can configure limits in the `docker-compose.yml`.
+Cleanup is done once per hour; you can configure limits in the `docker-compose.yml`.
 `MIN_EXPECTED_DISK_GiB: 10` - this is a sanity check. On ZFS or other less common file systems, there could be problems
 with figuring out free space. To be sure, run `docker compose logs replay_service` and look for something like
 `Unable to determine disk usage!` or `Disk free: 20.5% (13378 MiB)` lines to be sure.
@@ -154,18 +153,18 @@ with figuring out free space. To be sure, run `docker compose logs replay_servic
 
 Parsing is attempted using https://github.com/Donaldduck8/reflex-replay-tools thing, and may break with future reflex
 updates (who would believe, reflex updates...). On errors, it falls back to parsing the replay name to get the match
-date. If that thing crashes, then whole `replay_service` will too, so you contact me to see if it's fixable.
+date. If that thing crashes, then the whole `replay_service` will too, so you contact me to see if it's fixable.
 
-So far it works almost perfectly, except if a player leaves a match early, then they won't be listed.
+So far, it works almost perfectly, except if a player leaves a match early, then they won't be listed.
 
-Parsed DB is stored in `db` folder. The DB retains data even for removed replays, so works like a match history.
+Parsed DB is stored in `db` folder. The DB retains data even for removed replays, so it works like a match history.
 
 #### Frontend
 
 Nginx serves replays and static files for a web page - there is no "active" component here, no input data except for a
 URL path.
 
-Currently implemented on Vue.js just because, plus, the original idea was to add some filtering, so it may worth the
+Currently implemented on Vue.js just because, plus, the original idea was to add some filtering, so it may be worth the
 slight overhead.
 There is no dedicated build container or anything, nginx just serves `_internal/replay_frontend/dist` that comes from
 the repo.
@@ -187,7 +186,7 @@ Check `docker stats` for residual RAM usage and `cat /sys/fs/cgroup/system.slice
 
 The easiest way is to start afresh (as in the how-to section), then move all the replays into the new location.
 
-I'll try to make it possible for the future updates to work as simple `git pull` + comparison of docker-compose with a
+I'll try to make it possible for the future updates to work as a simple `git pull` + comparison of the docker-compose.yml with a
 clear list of changes.
 
 #### Versioning
@@ -197,13 +196,13 @@ perhaps service restart) should do
 the thing.
 
 ## Possible future improvements
-- sanitized rulesets: there is a possibility that things like `sv_refpassword` can be included in it - need to sanitize
-- TLS for the replay web server
-- health checks with notifications
-- using image repos instead of building everything locally, so the whole deployment could be just a single
+- fix a problem where servers can start before rulesets are loaded, which results in errors if a server is configured with a ruleset from git 
+- add TLS for the replay web server
+- add health checks with notifications (an external solution is documented)
+- use image repos instead of building everything locally so that the whole deployment could be just a single
   docker-compose file
-- tc (Trafic Control) settings to limit web traffic and prioritize reflexded UDP
-- adding donation links!
-- the current replay frontend is ugly and has no filtering, there are some `ideas.md`/`TODO.md` files in the repo, so I
-  won't cover details here
-- updating reflexded automatically (for now keeping things manual so nothing silently breaks + it can be complicated)
+- use tc (Trafic Control) settings to limit web traffic and prioritize reflexded UDP
+- add donation links!
+- improve replay frontend, which is ugly and has no filtering (there are some `ideas.md`/`TODO.md` already)
+- implement reflexded autoupdater (for now, keeping things manual so nothing silently breaks; and it can be complicated)
+- stop using root user in Docker containers
